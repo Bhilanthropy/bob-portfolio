@@ -1,10 +1,13 @@
 /* CSS Variables for Autumn Sunset Theme */
 :root {
-    --deep-red: #8B2E1F;
-    --burnt-orange: #D4662A;
-    --warm-yellow: #E8A65D;
-    --forest-green: #3A5A40;
-    --dark-olive: #2D3A2E;
+    --twilight-purple: #1a1625;
+    --deep-purple: #3d2742;
+    --burgundy: #6b3649;
+    --dusty-red: #8B4545;
+    --terracotta: #C96850;
+    --golden-orange: #E89C5C;
+    --dark-earth: #2D3A2E;
+    --near-black: #1a1f1a;
     --cream: #F5F1E8;
     --text-primary: #F5F1E8;
     --text-secondary: rgba(245, 241, 232, 0.7);
@@ -34,15 +37,15 @@ body {
     height: 100%;
     z-index: -1;
     background: linear-gradient(
-        180deg,
-        #1a1625 0%,
-        #3d2742 15%,
-        #6b3649 30%,
-        #8B4545 45%,
-        #C96850 60%,
-        #E89C5C 75%,
-        #2D3A2E 90%,
-        #1a1f1a 100%
+    180deg,                           /* ← VERTICAL (top to bottom) */
+    #1a1625 0%,                       /* Deep twilight purple (top sky) */
+    #3d2742 15%,                      /* Dark purple */
+    #6b3649 30%,                      /* Muted burgundy */
+    #8B4545 45%,                      /* Dusty red */
+    #C96850 60%,                      /* Warm terracotta */
+    #E89C5C 75%,                      /* Golden orange */
+    #2D3A2E 90%,                      /* Dark earth green */
+    #1a1f1a 100%                      /* Near black (ground) */
     );
     background-size: 200% 200%;
     animation: gradientShift 20s ease infinite;
