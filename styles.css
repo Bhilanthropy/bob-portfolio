@@ -45,10 +45,16 @@ body {
         #1a1f1a 100%
     );
     background-size: 200% 200%;
-    animation: gradientShift 20s ease infinite;
+    transition: background-position 0.3s ease;
 }
 
-/* Auto-animating gradient for mobile */
+/* Auto-animating gradient - MOBILE ONLY */
+@media (max-width: 768px) {
+    .gradient-background {
+        animation: gradientShift 20s ease infinite;
+    }
+}
+
 @keyframes gradientShift {
     0% {
         background-position: 50% 0%;
