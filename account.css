@@ -1,0 +1,279 @@
+/* Account/Contact Page Specific Styles */
+
+.account-contact-wrapper {
+    min-height: 100vh;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.split-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.account-section,
+.contact-section {
+    animation: fadeIn 1s ease-out;
+}
+
+.section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 300;
+    letter-spacing: 0.03em;
+    margin-bottom: 2rem;
+    color: var(--text-primary);
+}
+
+/* Profile Preview */
+.profile-preview {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding: 2rem;
+    background: rgba(245, 241, 232, 0.05);
+    border-radius: 12px;
+    border: 1px solid rgba(245, 241, 232, 0.1);
+}
+
+.avatar-placeholder {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: rgba(245, 241, 232, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    transition: all 0.5s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.avatar-placeholder.has-themes {
+    background: linear-gradient(135deg, var(--theme-color-1, #ccc) 0%, var(--theme-color-2, #999) 50%, var(--theme-color-3, #666) 100%);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+}
+
+.preview-hint {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+/* Theme Selection */
+.theme-selection {
+    margin: 2rem 0;
+}
+
+.theme-selection label {
+    font-size: 0.9rem;
+    font-weight: 300;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.theme-hint {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+}
+
+.theme-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1rem;
+}
+
+.theme-card {
+    background: rgba(245, 241, 232, 0.08);
+    border: 2px solid rgba(245, 241, 232, 0.2);
+    border-radius: 8px;
+    padding: 1.5rem 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.theme-card:hover {
+    background: rgba(245, 241, 232, 0.12);
+    border-color: rgba(245, 241, 232, 0.4);
+    transform: translateY(-2px);
+}
+
+.theme-card.selected {
+    background: rgba(232, 166, 93, 0.2);
+    border-color: var(--golden-orange);
+    box-shadow: 0 4px 15px rgba(232, 166, 93, 0.3);
+}
+
+.theme-card.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.theme-name {
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    display: block;
+    line-height: 1.4;
+}
+
+/* Checkbox Group */
+.checkbox-group {
+    margin: 1.5rem 0;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    font-weight: 300;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: var(--golden-orange);
+}
+
+.checkbox-label span {
+    text-transform: none;
+    letter-spacing: 0.02em;
+}
+
+/* Welcome Modal */
+.welcome-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(26, 22, 37, 0.95);
+    backdrop-filter: blur(10px);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.welcome-modal.active {
+    display: flex;
+}
+
+.modal-content {
+    text-align: center;
+    padding: 3rem;
+    max-width: 600px;
+}
+
+.welcome-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(2.5rem, 6vw, 4rem);
+    font-weight: 300;
+    letter-spacing: 0.03em;
+    margin-bottom: 2rem;
+    color: var(--text-primary);
+    animation: fadeInUp 0.8s ease-out;
+}
+
+.loading-dots {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    margin: 2rem 0;
+}
+
+.loading-dots span {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--golden-orange);
+    animation: bounce 1.4s infinite ease-in-out both;
+}
+
+.loading-dots span:nth-child(1) {
+    animation-delay: -0.32s;
+}
+
+.loading-dots span:nth-child(2) {
+    animation-delay: -0.16s;
+}
+
+@keyframes bounce {
+    0%, 80%, 100% {
+        transform: scale(0);
+        opacity: 0.5;
+    }
+    40% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.redirect-hint {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    animation: fadeIn 1s ease-out 0.5s both;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .split-container {
+        grid-template-columns: 1fr;
+        gap: 3rem;
+    }
+    
+    .theme-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .account-contact-wrapper {
+        padding: 1.5rem;
+    }
+    
+    .split-container {
+        gap: 2rem;
+    }
+    
+    .theme-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .theme-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .modal-content {
+        padding: 2rem 1.5rem;
+    }
+}

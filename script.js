@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Landing page click to navigate
     if (clickableArea) {
         clickableArea.addEventListener('click', function() {
-            window.location.href = 'contact.html';
+            window.location.href = 'account.html';
         });
     }
     

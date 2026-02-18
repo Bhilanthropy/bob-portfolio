@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Bob</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="dashboard.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=IBM+Plex+Sans:wght@300;400&display=swap" rel="stylesheet">
+</head>
+<body class="dashboard-page">
+    <div class="gradient-background" id="gradientBg"></div>
+    
+    <div class="dashboard-wrapper">
+        <header class="dashboard-header">
+            <h1 class="logo">Bob</h1>
+            <nav class="dashboard-nav">
+                <a href="index.html">Home</a>
+                <a href="#" id="logoutBtn">Logout</a>
+            </nav>
+        </header>
+        
+        <div class="dashboard-content">
+            <!-- User Profile Card -->
+            <div class="profile-card">
+                <div class="profile-avatar" id="userAvatar"></div>
+                <h2 class="user-name" id="userName">Loading...</h2>
+                <p class="user-username" id="userUsername">@username</p>
+                
+                <div class="user-themes">
+                    <h3>Your Causes</h3>
+                    <div class="themes-list" id="themesList"></div>
+                </div>
+                
+                <button class="edit-profile-btn">Edit Profile</button>
+            </div>
+            
+            <!-- Personal Updates Section -->
+            <div class="updates-section">
+                <h2 class="section-title">Your Personal Updates</h2>
+                <p class="coming-soon">Coming soon: Track your philanthropic journey and see personalized updates based on your selected causes.</p>
+                
+                <div class="placeholder-cards">
+                    <div class="placeholder-card">
+                        <div class="placeholder-icon">📊</div>
+                        <h3>Impact Dashboard</h3>
+                        <p>Track your contributions and see their real-world impact</p>
+                    </div>
+                    
+                    <div class="placeholder-card">
+                        <div class="placeholder-icon">📰</div>
+                        <h3>Curated News</h3>
+                        <p>Latest updates on causes that matter to you</p>
+                    </div>
+                    
+                    <div class="placeholder-card">
+                        <div class="placeholder-icon">🤝</div>
+                        <h3>Connect & Collaborate</h3>
+                        <p>Find others passionate about the same causes</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+    <script src="dashboard.js"></script>
+</body>
+</html>

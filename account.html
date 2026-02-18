@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Get Started - Bob</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="account.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=IBM+Plex+Sans:wght@300;400&display=swap" rel="stylesheet">
+</head>
+<body class="account-page">
+    <div class="gradient-background" id="gradientBg"></div>
+    
+    <div class="account-contact-wrapper">
+        <a href="index.html" class="back-link">← Back</a>
+        
+        <div class="split-container">
+            <!-- LEFT SIDE: ACCOUNT CREATION -->
+            <div class="account-section">
+                <h2 class="section-title">Create Account</h2>
+                
+                <div class="profile-preview" id="profilePreview">
+                    <div class="avatar-placeholder" id="avatarPreview"></div>
+                    <p class="preview-hint">Select themes to generate your avatar</p>
+                </div>
+                
+                <form id="accountForm" class="account-form">
+                    <div class="form-group">
+                        <label for="name">Name</label>
+                        <input type="text" id="name" name="name" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email-account">Email</label>
+                        <input type="email" id="email-account" name="email" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" required minlength="6">
+                    </div>
+                    
+                    <div class="theme-selection">
+                        <label>Select 3 Themes</label>
+                        <p class="theme-hint">Choose what matters most to you (<span id="themeCount">0</span>/3)</p>
+                        
+                        <div class="theme-grid" id="themeGrid">
+                            <div class="theme-card" data-theme="basic-needs">
+                                <span class="theme-name">Basic Needs & Poverty</span>
+                            </div>
+                            <div class="theme-card" data-theme="health">
+                                <span class="theme-name">Health & Medicine</span>
+                            </div>
+                            <div class="theme-card" data-theme="education">
+                                <span class="theme-name">Education & Knowledge</span>
+                            </div>
+                            <div class="theme-card" data-theme="environment">
+                                <span class="theme-name">Environment & Climate</span>
+                            </div>
+                            <div class="theme-card" data-theme="animals">
+                                <span class="theme-name">Animals</span>
+                            </div>
+                            <div class="theme-card" data-theme="children">
+                                <span class="theme-name">Children & Youth</span>
+                            </div>
+                            <div class="theme-card" data-theme="human-rights">
+                                <span class="theme-name">Human Rights & Social Justice</span>
+                            </div>
+                            <div class="theme-card" data-theme="community">
+                                <span class="theme-name">Community & Social Services</span>
+                            </div>
+                            <div class="theme-card" data-theme="culture">
+                                <span class="theme-name">Culture, Arts & Heritage</span>
+                            </div>
+                            <div class="theme-card" data-theme="technology">
+                                <span class="theme-name">Technology & Future Causes</span>
+                            </div>
+                            <div class="theme-card" data-theme="freedom">
+                                <span class="theme-name">Freedom of Speech</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="submit-button" id="createAccountBtn" disabled>Create Account</button>
+                </form>
+            </div>
+            
+            <!-- RIGHT SIDE: CONTACT FORM -->
+            <div class="contact-section">
+                <h2 class="section-title">Get in Touch</h2>
+                
+                <form action="https://formspree.io/f/xdalzqnq" method="POST" class="contact-form">
+                    <div class="form-group">
+                        <label for="contact-name">Name</label>
+                        <input type="text" id="contact-name" name="name" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="contact-email">Email</label>
+                        <input type="email" id="contact-email" name="email" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="message">Your Message</label>
+                        <textarea 
+                            id="message" 
+                            name="message" 
+                            required
+                            maxlength="280"
+                            placeholder="Max 280 characters"
+                            rows="4"
+                        ></textarea>
+                        <span class="char-counter"><span id="charCount">0</span>/280</span>
+                    </div>
+                    
+                    <div class="form-group checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="newsletter" value="yes">
+                            <span>Subscribe to newsletter for updates</span>
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="submit-button">Send Message</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Welcome Modal -->
+    <div class="welcome-modal" id="welcomeModal">
+        <div class="modal-content">
+            <h1 class="welcome-title">Welcome to this philanthropic journey</h1>
+            <div class="loading-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <p class="redirect-hint">Redirecting to your dashboard...</p>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+    <script src="account.js"></script>
+    <script>
+        // Character counter for message field
+        const messageField = document.getElementById('message');
+        const charCount = document.getElementById('charCount');
+        
+        if (messageField && charCount) {
+            messageField.addEventListener('input', function() {
+                charCount.textContent = this.value.length;
+            });
+        }
+    </script>
+</body>
+</html>
