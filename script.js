@@ -34,7 +34,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // Landing page click to navigate
     if (clickableArea) {
         clickableArea.addEventListener('click', function() {
-            window.location.href = 'account.html';
+            // Check if user is already logged in
+            const isLoggedIn = localStorage.getItem('isLoggedIn');
+            
+            if (isLoggedIn === 'true') {
+                window.location.href = 'dashboard.html';
+            } else {
+                window.location.href = 'account.html';
+            }
         });
     }
     

@@ -9,6 +9,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (!accountForm) return; // Only run on account page
     
+    // Check if already logged in - redirect to dashboard
+    const isLoggedIn = localStorage.getItem('isLoggedIn');
+    if (isLoggedIn === 'true') {
+        window.location.href = 'dashboard.html';
+        return;
+    }
+    
     let selectedThemes = [];
     const MAX_THEMES = 3;
     
