@@ -47,14 +47,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const dotsContainer = document.getElementById('dotsContainer');
     if (dotsContainer) {
         const DOT_SPACING = 30; // Vertical spacing between dots
-        const COLUMN_SPACING = 30; // Horizontal spacing between columns
-        const ANIMATION_DURATION = 3000; // 3 seconds per journey
+        const COLUMN_SPACING = 40; // Horizontal spacing between columns
+        const ANIMATION_DURATION = 2500; // 2.5 seconds per journey
         
-        let currentColumn = 0;
-        let currentRow = 0;
+        let columns = []; // Track each column's current height
         let maxRows = 0;
         let maxColumns = 0;
         let animationTimeout;
+        let currentIteration = 0;
         
         function calculateMaxDots() {
             maxRows = Math.floor(window.innerHeight / DOT_SPACING);
@@ -65,12 +65,14 @@ document.addEventListener('DOMContentLoaded', function() {
             const dot = document.createElement('div');
             dot.className = 'dot';
             
-            // Position dot at the start (left edge)
-            const yPosition = window.innerHeight - (row * DOT_SPACING) - 50; // Start from bottom
+            // Position dot vertically (from bottom)
+            const yPosition = window.innerHeight - (row * DOT_SPACING) - 50;
             dot.style.top = `${yPosition}px`;
             dot.style.left = '0px';
             
-            // Animate the dot
+            // Delay based on column (creates staggered effect)
+            const delay = column * 100; // 100ms delay per column
+            dot.style.animationDelay = `${delay}ms`;
             dot.style.animation = `dotMove ${ANIMATION_DURATION}ms linear forwards`;
             
             dotsContainer.appendChild(dot);
@@ -78,36 +80,48 @@ document.addEventListener('DOMContentLoaded', function() {
             // Remove dot after animation completes
             setTimeout(() => {
                 dot.remove();
-            }, ANIMATION_DURATION);
+            }, ANIMATION_DURATION + delay);
         }
         
         function animateDots() {
-            // Create all dots in the current column
-            for (let row = 0; row <= currentRow; row++) {
-                createDot(currentColumn, row);
+            // Create dots for all active columns
+            for (let col = 0; col < columns.length; col++) {
+                const height = columns[col];
+                for (let row = 0; row < height; row++) {
+                    createDot(col, row);
+                }
             }
             
-            // Move to next iteration
-            currentRow++;
+            currentIteration++;
             
-            // Check if column is complete
-            if (currentRow > maxRows) {
-                currentRow = 0;
-                currentColumn++;
-                
-                // Check if all columns are complete
-                if (currentColumn > maxColumns) {
-                    // Reset everything and pause before restarting
-                    currentColumn = 0;
-                    currentRow = 0;
-                    dotsContainer.innerHTML = ''; // Clear all dots
-                    
-                    // Wait 2 seconds before restarting
-                    animationTimeout = setTimeout(() => {
-                        animateDots();
-                    }, 2000);
-                    return;
+            // Build up existing columns or add new column
+            let allColumnsFull = true;
+            for (let i = 0; i < columns.length; i++) {
+                if (columns[i] < maxRows) {
+                    columns[i]++;
+                    allColumnsFull = false;
+                    break; // Only grow one column at a time
                 }
+            }
+            
+            // If all columns are full but we haven't reached max columns, add new column
+            if (allColumnsFull && columns.length < maxColumns) {
+                columns.push(1); // Start new column with 1 dot
+                allColumnsFull = false;
+            }
+            
+            // If all columns are full and we've reached max columns, reset
+            if (allColumnsFull && columns.length >= maxColumns) {
+                currentIteration = 0;
+                columns = [];
+                dotsContainer.innerHTML = '';
+                
+                // Wait 2 seconds before restarting
+                animationTimeout = setTimeout(() => {
+                    columns = [1]; // Start with first column, 1 dot
+                    animateDots();
+                }, 2000);
+                return;
             }
             
             // Continue animation
@@ -118,6 +132,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Initialize and start animation
         calculateMaxDots();
+        columns = [1]; // Start with first column, 1 dot
         animateDots();
         
         // Recalculate on window resize

@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', function() {
         'environment': ['#228B22', '#32CD32', '#90EE90'],
         'animals': ['#8B4789', '#9370DB', '#BA55D3'],
         'children': ['#FFD700', '#FFA500', '#FF8C00'],
-        'human-rights': '#000000', '#696969', '#A9A9A9'],
+        'human-rights': ['#000000', '#696969', '#A9A9A9'],
         'community': ['#FF69B4', '#FF1493', '#C71585'],
         'culture': ['#DAA520', '#B8860B', '#CD853F'],
         'technology': ['#00CED1', '#20B2AA', '#48D1CC'],
