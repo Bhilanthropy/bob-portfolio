@@ -3,48 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Get Started - Bob</title>
+    <title>Join 4H - Bob</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="account.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=IBM+Plex+Sans:wght@300;400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400&display=swap" rel="stylesheet">
+    <!-- Cloudflare Turnstile -->
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
-<body class="account-page">
+<body class="account-page scrollable-page">
     <div class="gradient-background" id="gradientBg"></div>
     
-    <div class="account-contact-wrapper">
+    <!-- SECTION 1: HERO -->
+    <section class="hero-section">
         <a href="index.html" class="back-link">← Back</a>
         
-        <div class="split-container">
-            <!-- LEFT SIDE: ACCOUNT CREATION -->
-            <div class="account-section">
-                <h2 class="section-title">Create Account</h2>
-                
+        <div class="hero-content">
+            <h1 class="hero-title">4H</h1>
+            <div class="sub-hero">
+                <p class="rotating-tagline" id="rotatingTagline">building impact that lasts</p>
+            </div>
+            <div class="scroll-indicator">
+                <span>↓</span>
+            </div>
+        </div>
+    </section>
+    
+    <!-- SECTION 2: IMPACT TEXT -->
+    <section class="impact-section">
+        <div class="section-container">
+            <div class="impact-content">
+                <p class="impact-text">
+                    Looking to make real impact, grow your impact, and have lasting impact? 
+                    <strong>4H</strong> has the ambition to create a personal portfolio across key domains 
+                    for individuals to grow their impact. It starts with your donation but can 
+                    expand well beyond! We want your voice to be heard across eons.
+                </p>
+            </div>
+        </div>
+    </section>
+    
+    <!-- SECTION 3: ACCOUNT CREATION -->
+    <section class="account-creation-section" id="accountSection">
+        <div class="section-container">
+            <h2 class="section-title">Create Your Account</h2>
+            <p class="section-subtitle">Join the philanthropic journey</p>
+            
+            <div class="account-form-wrapper">
                 <div class="profile-preview" id="profilePreview">
                     <div class="avatar-placeholder" id="avatarPreview"></div>
                     <p class="preview-hint">Select themes to generate your avatar</p>
                 </div>
                 
                 <form id="accountForm" class="account-form">
-                    <div class="form-group">
-                        <label for="name">Name</label>
-                        <input type="text" id="name" name="name" required>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="name">Name</label>
+                            <input type="text" id="name" name="name" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="username">Username</label>
+                            <input type="text" id="username" name="username" required>
+                        </div>
                     </div>
                     
-                    <div class="form-group">
-                        <label for="username">Username</label>
-                        <input type="text" id="username" name="username" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="email-account">Email</label>
-                        <input type="email" id="email-account" name="email" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="password">Password</label>
-                        <input type="password" id="password" name="password" required minlength="6">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="email-account">Email</label>
+                            <input type="email" id="email-account" name="email" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="password">Password</label>
+                            <input type="password" id="password" name="password" required minlength="6">
+                        </div>
                     </div>
                     
                     <div class="theme-selection">
@@ -95,12 +129,17 @@
                     </div>
                 </form>
             </div>
+        </div>
+    </section>
+    
+    <!-- SECTION 4: CONTACT FORM -->
+    <section class="contact-section-full" id="contactSection">
+        <div class="section-container">
+            <h2 class="section-title">Get in Touch</h2>
+            <p class="section-subtitle">Have questions? We'd love to hear from you</p>
             
-            <!-- RIGHT SIDE: CONTACT FORM -->
-            <div class="contact-section">
-                <h2 class="section-title">Get in Touch</h2>
-                
-                <form action="https://formspree.io/f/xdalzqnq" method="POST" class="contact-form">
+            <form action="https://formspree.io/f/xdalzqnq" method="POST" class="contact-form-full" id="contactForm">
+                <div class="form-row">
                     <div class="form-group">
                         <label for="contact-name">Name</label>
                         <input type="text" id="contact-name" name="name" required>
@@ -110,32 +149,54 @@
                         <label for="contact-email">Email</label>
                         <input type="email" id="contact-email" name="email" required>
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="message">Your Message</label>
-                        <textarea 
-                            id="message" 
-                            name="message" 
-                            required
-                            maxlength="280"
-                            placeholder="Max 280 characters"
-                            rows="4"
-                        ></textarea>
-                        <span class="char-counter"><span id="charCount">0</span>/280</span>
-                    </div>
-                    
-                    <div class="form-group checkbox-group">
-                        <label class="checkbox-label">
-                            <input type="checkbox" name="newsletter" value="yes">
-                            <span>Subscribe to newsletter for updates</span>
-                        </label>
-                    </div>
-                    
-                    <button type="submit" class="submit-button">Send Message</button>
-                </form>
-            </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="message">Your Message</label>
+                    <textarea 
+                        id="message" 
+                        name="message" 
+                        required
+                        maxlength="280"
+                        placeholder="Max 280 characters"
+                        rows="4"
+                    ></textarea>
+                    <span class="char-counter"><span id="charCount">0</span>/280</span>
+                </div>
+                
+                <div class="form-group checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="newsletter" value="yes">
+                        <span>Subscribe to newsletter for updates</span>
+                    </label>
+                </div>
+                
+                <!-- Cloudflare Turnstile CAPTCHA -->
+                <div class="form-group captcha-wrapper">
+                    <div class="cf-turnstile" data-sitekey="YOUR_SITE_KEY" data-theme="dark"></div>
+                    <p class="captcha-note">Protected by Cloudflare Turnstile</p>
+                </div>
+                
+                <button type="submit" class="submit-button">Send Message</button>
+            </form>
         </div>
-    </div>
+    </section>
+    
+    <!-- FOOTER -->
+    <footer class="page-footer">
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="index.html">Home</a>
+                <span class="separator">•</span>
+                <a href="login.html">Login</a>
+                <span class="separator">•</span>
+                <a href="#accountSection">Create Account</a>
+                <span class="separator">•</span>
+                <a href="#contactSection">Contact</a>
+            </div>
+            <p class="footer-text">© 2026 4H. Making impact that lasts.</p>
+        </div>
+    </footer>
     
     <!-- Welcome Modal -->
     <div class="welcome-modal" id="welcomeModal">
@@ -162,6 +223,39 @@
                 charCount.textContent = this.value.length;
             });
         }
+        
+        // Rotating tagline
+        const taglines = [
+            'building impact that lasts',
+            'your philanthropic legacy',
+            'grow your impact indefinitely'
+        ];
+        
+        let currentTaglineIndex = 0;
+        const taglineElement = document.getElementById('rotatingTagline');
+        
+        if (taglineElement) {
+            setInterval(() => {
+                currentTaglineIndex = (currentTaglineIndex + 1) % taglines.length;
+                taglineElement.style.opacity = '0';
+                
+                setTimeout(() => {
+                    taglineElement.textContent = taglines[currentTaglineIndex];
+                    taglineElement.style.opacity = '1';
+                }, 500);
+            }, 3000); // Change every 3 seconds
+        }
+        
+        // Smooth scroll for footer links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
     </script>
 </body>
 </html>
