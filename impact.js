@@ -74,7 +74,6 @@ document.addEventListener('DOMContentLoaded', function() {
     displayMetrics(donations);
     displayChart(donations);
     displayCausesBreakdown(userData.themes, donations);
-    displayMonthlyAverage(donations);
     
     // Setup reset demo data button
     setupResetDemoData();
@@ -542,66 +541,93 @@ function setupResetDemoData() {
 
 function setupPredictionCalculator() {
     const calcButton = document.getElementById('calculatePrediction');
-    if (!calcButton) return;
+    if (!calcButton) {
+        console.warn('Calculate prediction button not found');
+        return;
+    }
     
     calcButton.addEventListener('click', function() {
-        const newMonthlyInput = document.getElementById('newMonthlyAmount');
-        const yearsInput = document.getElementById('projectionYears');
-        
-        if (!newMonthlyInput || !yearsInput) return;
-        
-        const newMonthly = parseFloat(newMonthlyInput.value);
-        const years = parseInt(yearsInput.value);
-        
-        if (!newMonthly || !years) {
-            alert('Please enter both monthly amount and projection years');
-            return;
+        try {
+            const newMonthlyInput = document.getElementById('newMonthlyAmount');
+            const yearsInput = document.getElementById('projectionYears');
+            
+            if (!newMonthlyInput || !yearsInput) {
+                console.error('Prediction inputs not found');
+                return;
+            }
+            
+            const newMonthly = parseFloat(newMonthlyInput.value);
+            const years = parseInt(yearsInput.value);
+            
+            if (!newMonthly || !years || newMonthly <= 0 || years <= 0) {
+                alert('Please enter valid monthly amount and projection years');
+                return;
+            }
+            
+            // Get current donations and metrics
+            const donations = JSON.parse(localStorage.getItem('donations') || '[]');
+            
+            if (donations.length === 0) {
+                alert('No donation data found. Please add donations or reset to demo data first.');
+                return;
+            }
+            
+            const currentMetrics = calculateCompounding(donations);
+            
+            // Calculate current monthly average
+            const currentMonthly = calculateMonthlyAverage(donations);
+            
+            if (currentMonthly === 0) {
+                alert('Unable to calculate monthly average. Please ensure you have donations in the last 12 months.');
+                return;
+            }
+            
+            console.log('Current monthly:', currentMonthly, 'New monthly:', newMonthly, 'Years:', years);
+            
+            // Project future with CURRENT monthly amount
+            const currentProjection = projectFuture(currentMetrics.portfolioValue, currentMonthly, years);
+            
+            // Project future with NEW monthly amount
+            const newProjection = projectFuture(currentMetrics.portfolioValue, newMonthly, years);
+            
+            // Display comparison chart
+            displayPredictionChart(currentProjection, newProjection, currentMonthly, newMonthly);
+            
+            // Show results section
+            document.getElementById('predictionResults').style.display = 'block';
+            
+            // Update result text for both scenarios
+            const currentFutureValue = currentProjection[currentProjection.length - 1].portfolio;
+            const newFutureValue = newProjection[newProjection.length - 1].portfolio;
+            
+            const currentFutureImpact = currentFutureValue * 0.05 * 0.40;
+            const newFutureImpact = newFutureValue * 0.05 * 0.40;
+            
+            document.getElementById('currentScenarioValue').textContent = 
+                `€${Math.round(currentFutureValue).toLocaleString()}`;
+            document.getElementById('currentScenarioImpact').textContent = 
+                `€${Math.round(currentFutureImpact).toLocaleString()}`;
+            
+            document.getElementById('newScenarioValue').textContent = 
+                `€${Math.round(newFutureValue).toLocaleString()}`;
+            document.getElementById('newScenarioImpact').textContent = 
+                `€${Math.round(newFutureImpact).toLocaleString()}`;
+            
+            // Show difference
+            const valueDiff = newFutureValue - currentFutureValue;
+            const impactDiff = newFutureImpact - currentFutureImpact;
+            
+            document.getElementById('valueDifference').textContent = 
+                `${valueDiff >= 0 ? '+' : ''}€${Math.round(valueDiff).toLocaleString()}`;
+            document.getElementById('impactDifference').textContent = 
+                `${impactDiff >= 0 ? '+' : ''}€${Math.round(impactDiff).toLocaleString()}`;
+            
+            console.log('Prediction calculated successfully');
+            
+        } catch (error) {
+            console.error('Error calculating prediction:', error);
+            alert('An error occurred while calculating the prediction. Please try again or check the console for details.');
         }
-        
-        // Get current donations and metrics
-        const donations = JSON.parse(localStorage.getItem('donations') || '[]');
-        const currentMetrics = calculateCompounding(donations);
-        
-        // Calculate current monthly average
-        const currentMonthly = calculateMonthlyAverage(donations);
-        
-        // Project future with CURRENT monthly amount
-        const currentProjection = projectFuture(currentMetrics.portfolioValue, currentMonthly, years);
-        
-        // Project future with NEW monthly amount
-        const newProjection = projectFuture(currentMetrics.portfolioValue, newMonthly, years);
-        
-        // Display comparison chart
-        displayPredictionChart(currentProjection, newProjection, currentMonthly, newMonthly);
-        
-        // Show results section
-        document.getElementById('predictionResults').style.display = 'block';
-        
-        // Update result text for both scenarios
-        const currentFutureValue = currentProjection[currentProjection.length - 1].portfolio;
-        const newFutureValue = newProjection[newProjection.length - 1].portfolio;
-        
-        const currentFutureImpact = currentFutureValue * 0.05 * 0.40;
-        const newFutureImpact = newFutureValue * 0.05 * 0.40;
-        
-        document.getElementById('currentScenarioValue').textContent = 
-            `€${Math.round(currentFutureValue).toLocaleString()}`;
-        document.getElementById('currentScenarioImpact').textContent = 
-            `€${Math.round(currentFutureImpact).toLocaleString()}`;
-        
-        document.getElementById('newScenarioValue').textContent = 
-            `€${Math.round(newFutureValue).toLocaleString()}`;
-        document.getElementById('newScenarioImpact').textContent = 
-            `€${Math.round(newFutureImpact).toLocaleString()}`;
-        
-        // Show difference
-        const valueDiff = newFutureValue - currentFutureValue;
-        const impactDiff = newFutureImpact - currentFutureImpact;
-        
-        document.getElementById('valueDifference').textContent = 
-            `${valueDiff >= 0 ? '+' : ''}€${Math.round(valueDiff).toLocaleString()}`;
-        document.getElementById('impactDifference').textContent = 
-            `${impactDiff >= 0 ? '+' : ''}€${Math.round(impactDiff).toLocaleString()}`;
     });
 }
 
