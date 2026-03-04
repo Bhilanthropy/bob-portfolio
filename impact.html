@@ -85,26 +85,25 @@
             
             <!-- Compounding Chart -->
             <div class="chart-section">
-                <h2 class="section-title">Growth Over Time</h2>
-                <p class="section-description">
-                    Your donations are invested wisely. 50% of dividends are reinvested for compounding growth, 
-                    40% goes directly to your chosen causes, and 10% covers operational costs.
-                </p>
+                <div class="chart-header">
+                    <div>
+                        <h2 class="section-title">Growth Over Time</h2>
+                        <p class="section-description">
+                            Your donations are invested wisely. 50% of dividends are reinvested for compounding growth, 
+                            40% goes directly to your chosen causes, and 10% covers operational costs.
+                        </p>
+                    </div>
+                    <div class="view-toggle">
+                        <button id="viewMonthly" class="toggle-btn active">Monthly</button>
+                        <button id="viewYearly" class="toggle-btn">Yearly</button>
+                    </div>
+                </div>
                 
                 <div class="chart-container">
                     <canvas id="compoundingChart"></canvas>
                 </div>
                 
-                <div class="chart-legend">
-                    <div class="legend-item">
-                        <span class="legend-dot" style="background: #E89C5C;"></span>
-                        <span>Your Cumulative Donations</span>
-                    </div>
-                    <div class="legend-item">
-                        <span class="legend-dot" style="background: #228B22;"></span>
-                        <span>Portfolio Value (with compounding)</span>
-                    </div>
-                </div>
+                <p class="chart-note">💡 Click legend items to show/hide lines</p>
                 
                 <div class="milestone-alert" id="milestoneAlert" style="display: none;">
                     <svg viewBox="0 0 24 24" class="alert-icon">
@@ -203,14 +202,49 @@
                     </div>
                     
                     <div class="prediction-results" id="predictionResults" style="display: none;">
-                        <div class="result-metrics">
-                            <div class="result-card">
-                                <h4>Projected Portfolio Value</h4>
-                                <p class="result-value" id="futurePortfolioValue">€0</p>
+                        <h3 class="comparison-title">Scenario Comparison</h3>
+                        
+                        <div class="comparison-grid">
+                            <div class="scenario-card current">
+                                <h4>Current Scenario</h4>
+                                <div class="scenario-metrics">
+                                    <div class="metric">
+                                        <span class="metric-label">Portfolio Value</span>
+                                        <span class="metric-value" id="currentScenarioValue">€0</span>
+                                    </div>
+                                    <div class="metric">
+                                        <span class="metric-label">Annual Impact</span>
+                                        <span class="metric-value" id="currentScenarioImpact">€0</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="result-card">
-                                <h4>Projected Annual Impact</h4>
-                                <p class="result-value" id="futureAnnualImpact">€0</p>
+                            
+                            <div class="scenario-card new">
+                                <h4>New Scenario</h4>
+                                <div class="scenario-metrics">
+                                    <div class="metric">
+                                        <span class="metric-label">Portfolio Value</span>
+                                        <span class="metric-value" id="newScenarioValue">€0</span>
+                                    </div>
+                                    <div class="metric">
+                                        <span class="metric-label">Annual Impact</span>
+                                        <span class="metric-value" id="newScenarioImpact">€0</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="scenario-card difference">
+                                <h4>Difference</h4>
+                                <div class="scenario-metrics">
+                                    <div class="metric">
+                                        <span class="metric-label">Portfolio Value</span>
+                                        <span class="metric-value green" id="valueDifference">€0</span>
+                                    </div>
+                                    <div class="metric">
+                                        <span class="metric-label">Annual Impact</span>
+                                        <span class="metric-value green" id="impactDifference">€0</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         

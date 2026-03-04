@@ -102,7 +102,7 @@ function calculateCompounding(donations) {
     );
     
     if (sortedDonations.length === 0) {
-        return { dataPoints: [], totalDonated: 0, portfolioValue: 0, annualImpact: 0 };
+        return { dataPoints: [], totalDonated: 0, portfolioValue: 0, annualImpact: 0, totalDividends: 0 };
     }
     
     const startDate = new Date(sortedDonations[0].date);
@@ -112,11 +112,13 @@ function calculateCompounding(donations) {
     const dataPoints = [];
     let portfolioValue = 0;
     let cumulativeDonations = 0;
+    let cumulativeDividends = 0;
     let currentDate = new Date(startDate);
     let donationIndex = 0;
     
     while (currentDate <= today) {
         const monthStr = currentDate.toISOString().slice(0, 7);
+        const yearStr = currentDate.getFullYear().toString();
         
         // Add any donations for this month
         while (donationIndex < sortedDonations.length) {
@@ -136,10 +138,13 @@ function calculateCompounding(donations) {
         const monthlyDividend = portfolioValue * (ANNUAL_DIVIDEND_RATE / 12);
         const reinvestAmount = monthlyDividend * REINVEST_RATE;
         portfolioValue += reinvestAmount;
+        cumulativeDividends += monthlyDividend;
         
         dataPoints.push({
             date: monthStr,
-            donations: cumulativeDonations,
+            year: yearStr,
+            donations: Math.round(cumulativeDonations * 100) / 100,
+            dividends: Math.round(cumulativeDividends * 100) / 100,
             portfolio: Math.round(portfolioValue * 100) / 100
         });
         
@@ -155,7 +160,8 @@ function calculateCompounding(donations) {
         dataPoints,
         totalDonated: cumulativeDonations,
         portfolioValue: Math.round(portfolioValue * 100) / 100,
-        annualImpact: Math.round(annualImpact * 100) / 100
+        annualImpact: Math.round(annualImpact * 100) / 100,
+        totalDividends: Math.round(cumulativeDividends * 100) / 100
     };
 }
 
@@ -240,34 +246,60 @@ function getYearsSinceFirstDonation(donations) {
     return Math.max(1, (today - firstDate) / (365.25 * 24 * 60 * 60 * 1000));
 }
 
+let currentChartView = 'monthly'; // Track current view
+let currentChartInstance = null; // Track chart instance
+
 function displayChart(donations) {
     const metrics = calculateCompounding(donations);
     const ctx = document.getElementById('compoundingChart');
     
     if (!ctx) return;
     
-    new Chart(ctx, {
+    // Destroy existing chart if exists
+    if (currentChartInstance) {
+        currentChartInstance.destroy();
+    }
+    
+    // Get data based on current view
+    const chartData = currentChartView === 'monthly' 
+        ? prepareMonthlyData(metrics.dataPoints)
+        : prepareYearlyData(metrics.dataPoints);
+    
+    // Create chart with 3 datasets
+    currentChartInstance = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: metrics.dataPoints.map(d => d.date),
+            labels: chartData.labels,
             datasets: [
                 {
-                    label: 'Your Cumulative Donations',
-                    data: metrics.dataPoints.map(d => d.donations),
+                    label: 'Cumulative Donations',
+                    data: chartData.donations,
                     borderColor: '#E89C5C',
                     backgroundColor: 'rgba(232, 166, 93, 0.1)',
                     borderWidth: 3,
                     tension: 0.4,
-                    fill: false
+                    fill: false,
+                    hidden: false
                 },
                 {
-                    label: 'Portfolio Value (with compounding)',
-                    data: metrics.dataPoints.map(d => d.portfolio),
+                    label: 'Cumulative Dividends',
+                    data: chartData.dividends,
+                    borderColor: '#4169E1',
+                    backgroundColor: 'rgba(65, 105, 225, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: false,
+                    hidden: false
+                },
+                {
+                    label: 'Portfolio Value',
+                    data: chartData.portfolio,
                     borderColor: '#228B22',
                     backgroundColor: 'rgba(34, 139, 34, 0.1)',
                     borderWidth: 3,
                     tension: 0.4,
-                    fill: false
+                    fill: false,
+                    hidden: false
                 }
             ]
         },
@@ -276,7 +308,24 @@ function displayChart(donations) {
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    display: false
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        color: '#F5F1E8',
+                        usePointStyle: true,
+                        padding: 15,
+                        font: {
+                            size: 12,
+                            family: "'IBM Plex Sans', sans-serif"
+                        }
+                    },
+                    onClick: function(e, legendItem, legend) {
+                        const index = legendItem.datasetIndex;
+                        const chart = legend.chart;
+                        const meta = chart.getDatasetMeta(index);
+                        meta.hidden = !meta.hidden;
+                        chart.update();
+                    }
                 },
                 tooltip: {
                     mode: 'index',
@@ -327,6 +376,63 @@ function displayChart(donations) {
             }
         }
     });
+    
+    // Setup view toggle buttons
+    setupChartViewToggle(donations);
+}
+
+function prepareMonthlyData(dataPoints) {
+    return {
+        labels: dataPoints.map(d => d.date),
+        donations: dataPoints.map(d => d.donations),
+        dividends: dataPoints.map(d => d.dividends),
+        portfolio: dataPoints.map(d => d.portfolio)
+    };
+}
+
+function prepareYearlyData(dataPoints) {
+    const yearlyData = {};
+    
+    // Aggregate by year (take last month of each year)
+    dataPoints.forEach(point => {
+        const year = point.year;
+        if (!yearlyData[year] || point.date > yearlyData[year].date) {
+            yearlyData[year] = point;
+        }
+    });
+    
+    const years = Object.keys(yearlyData).sort();
+    
+    return {
+        labels: years,
+        donations: years.map(y => yearlyData[y].donations),
+        dividends: years.map(y => yearlyData[y].dividends),
+        portfolio: years.map(y => yearlyData[y].portfolio)
+    };
+}
+
+function setupChartViewToggle(donations) {
+    const monthlyBtn = document.getElementById('viewMonthly');
+    const yearlyBtn = document.getElementById('viewYearly');
+    
+    if (!monthlyBtn || !yearlyBtn) return;
+    
+    monthlyBtn.addEventListener('click', function() {
+        if (currentChartView === 'monthly') return;
+        currentChartView = 'monthly';
+        monthlyBtn.classList.add('active');
+        yearlyBtn.classList.remove('active');
+        displayChart(donations);
+    });
+    
+    yearlyBtn.addEventListener('click', function() {
+        if (currentChartView === 'yearly') return;
+        currentChartView = 'yearly';
+        yearlyBtn.classList.add('active');
+        monthlyBtn.classList.remove('active');
+        displayChart(donations);
+    });
+}
 }
 
 function displayCausesBreakdown(themes, donations) {
@@ -437,23 +543,46 @@ function setupPredictionCalculator() {
         const donations = JSON.parse(localStorage.getItem('donations') || '[]');
         const currentMetrics = calculateCompounding(donations);
         
-        // Project future with new monthly amount
-        const projection = projectFuture(currentMetrics.portfolioValue, newMonthly, years);
+        // Calculate current monthly average
+        const currentMonthly = calculateMonthlyAverage(donations);
         
-        // Display projection chart
-        displayPredictionChart(projection, currentMetrics.portfolioValue);
+        // Project future with CURRENT monthly amount
+        const currentProjection = projectFuture(currentMetrics.portfolioValue, currentMonthly, years);
+        
+        // Project future with NEW monthly amount
+        const newProjection = projectFuture(currentMetrics.portfolioValue, newMonthly, years);
+        
+        // Display comparison chart
+        displayPredictionChart(currentProjection, newProjection, currentMonthly, newMonthly);
         
         // Show results section
         document.getElementById('predictionResults').style.display = 'block';
         
-        // Update result text
-        const futureValue = projection[projection.length - 1].portfolio;
-        const futureAnnualImpact = futureValue * 0.05 * 0.40; // 5% dividend, 40% to causes
+        // Update result text for both scenarios
+        const currentFutureValue = currentProjection[currentProjection.length - 1].portfolio;
+        const newFutureValue = newProjection[newProjection.length - 1].portfolio;
         
-        document.getElementById('futurePortfolioValue').textContent = 
-            `€${Math.round(futureValue).toLocaleString()}`;
-        document.getElementById('futureAnnualImpact').textContent = 
-            `€${Math.round(futureAnnualImpact).toLocaleString()}`;
+        const currentFutureImpact = currentFutureValue * 0.05 * 0.40;
+        const newFutureImpact = newFutureValue * 0.05 * 0.40;
+        
+        document.getElementById('currentScenarioValue').textContent = 
+            `€${Math.round(currentFutureValue).toLocaleString()}`;
+        document.getElementById('currentScenarioImpact').textContent = 
+            `€${Math.round(currentFutureImpact).toLocaleString()}`;
+        
+        document.getElementById('newScenarioValue').textContent = 
+            `€${Math.round(newFutureValue).toLocaleString()}`;
+        document.getElementById('newScenarioImpact').textContent = 
+            `€${Math.round(newFutureImpact).toLocaleString()}`;
+        
+        // Show difference
+        const valueDiff = newFutureValue - currentFutureValue;
+        const impactDiff = newFutureImpact - currentFutureImpact;
+        
+        document.getElementById('valueDifference').textContent = 
+            `${valueDiff >= 0 ? '+' : ''}€${Math.round(valueDiff).toLocaleString()}`;
+        document.getElementById('impactDifference').textContent = 
+            `${impactDiff >= 0 ? '+' : ''}€${Math.round(impactDiff).toLocaleString()}`;
     });
 }
 
@@ -487,7 +616,7 @@ function projectFuture(currentPortfolio, monthlyDonation, years) {
     return dataPoints;
 }
 
-function displayPredictionChart(projection, currentValue) {
+function displayPredictionChart(currentProjection, newProjection, currentMonthly, newMonthly) {
     const ctx = document.getElementById('predictionChart');
     if (!ctx) return;
     
@@ -498,10 +627,84 @@ function displayPredictionChart(projection, currentValue) {
     new Chart(ctx, {
         type: 'line',
         data: {
-            labels: projection.map(d => `Month ${d.month}`),
+            labels: currentProjection.map(d => `Month ${d.month}`),
             datasets: [
                 {
-                    label: 'Projected Portfolio Value',
+                    label: `Current Scenario (€${currentMonthly.toFixed(0)}/month)`,
+                    data: currentProjection.map(d => d.portfolio),
+                    borderColor: '#A89E8C',
+                    backgroundColor: 'rgba(168, 158, 140, 0.1)',
+                    borderWidth: 3,
+                    borderDash: [5, 5],
+                    tension: 0.4,
+                    fill: false
+                },
+                {
+                    label: `New Scenario (€${newMonthly}/month)`,
+                    data: newProjection.map(d => d.portfolio),
+                    borderColor: '#32CD32',
+                    backgroundColor: 'rgba(50, 205, 50, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        color: '#F5F1E8',
+                        usePointStyle: true,
+                        padding: 15,
+                        font: {
+                            size: 12,
+                            family: "'IBM Plex Sans', sans-serif"
+                        }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(26, 22, 37, 0.9)',
+                    titleColor: '#F5F1E8',
+                    bodyColor: '#F5F1E8',
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': €' + context.parsed.y.toLocaleString();
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    ticks: {
+                        color: '#A89E8C',
+                        callback: function(value) {
+                            return '€' + value.toLocaleString();
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(245, 241, 232, 0.1)'
+                    }
+                },
+                x: {
+                    ticks: {
+                        color: '#A89E8C',
+                        maxRotation: 45,
+                        minRotation: 45
+                    },
+                    grid: {
+                        color: 'rgba(245, 241, 232, 0.05)'
+                    }
+                }
+            }
+        }
+    });
+}
                     data: projection.map(d => d.portfolio),
                     borderColor: '#32CD32',
                     backgroundColor: 'rgba(50, 205, 50, 0.1)',
