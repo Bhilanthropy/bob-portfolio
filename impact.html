@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Impact Dashboard - 4H</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="dashboard.css">
+    <link rel="stylesheet" href="impact.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=IBM+Plex+Sans:wght@300;400&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="dashboard-page">
+    <div class="gradient-background" id="gradientBg"></div>
+    
+    <div class="dashboard-wrapper">
+        <header class="dashboard-header">
+            <h1 class="logo">4H</h1>
+            <nav class="dashboard-nav">
+                <a href="dashboard.html">Dashboard</a>
+                <a href="#" id="logoutBtn">Logout</a>
+            </nav>
+        </header>
+        
+        <div class="impact-content">
+            <div class="impact-header">
+                <h1 class="page-title">Your Impact Dashboard</h1>
+                <p class="page-subtitle">Watch your philanthropic legacy grow</p>
+            </div>
+            
+            <!-- Key Metrics -->
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        <svg viewBox="0 0 100 100" class="icon-donate">
+                            <path d="M50 20 L50 80 M30 50 L70 50" stroke="currentColor" stroke-width="3" fill="none"/>
+                            <circle cx="50" cy="50" r="30" stroke="currentColor" stroke-width="2" fill="none"/>
+                        </svg>
+                    </div>
+                    <h3 class="metric-label">Total Donated</h3>
+                    <p class="metric-value" id="totalDonated">$0</p>
+                    <p class="metric-change">Since joining</p>
+                </div>
+                
+                <div class="metric-card highlight">
+                    <div class="metric-icon">
+                        <svg viewBox="0 0 100 100" class="icon-growth">
+                            <path d="M20 80 Q30 60, 40 65 T60 50 T80 30" stroke="currentColor" stroke-width="3" fill="none"/>
+                            <path d="M75 25 L85 30 L80 40" fill="currentColor"/>
+                        </svg>
+                    </div>
+                    <h3 class="metric-label">Portfolio Value</h3>
+                    <p class="metric-value" id="portfolioValue">$0</p>
+                    <p class="metric-change" id="portfolioGrowth">+0% growth</p>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        <svg viewBox="0 0 100 100" class="icon-impact">
+                            <circle cx="50" cy="50" r="20" fill="currentColor" opacity="0.3"/>
+                            <circle cx="50" cy="50" r="30" fill="none" stroke="currentColor" stroke-width="2" opacity="0.5"/>
+                            <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" stroke-width="1" opacity="0.3"/>
+                        </svg>
+                    </div>
+                    <h3 class="metric-label">Annual Impact</h3>
+                    <p class="metric-value" id="annualImpact">$0</p>
+                    <p class="metric-change">Distributed to causes</p>
+                </div>
+            </div>
+            
+            <!-- Compounding Chart -->
+            <div class="chart-section">
+                <h2 class="section-title">Growth Over Time</h2>
+                <p class="section-description">
+                    Your donations are invested wisely. 50% of dividends are reinvested for compounding growth, 
+                    40% goes directly to your chosen causes, and 10% covers operational costs.
+                </p>
+                
+                <div class="chart-container">
+                    <canvas id="compoundingChart"></canvas>
+                </div>
+                
+                <div class="chart-legend">
+                    <div class="legend-item">
+                        <span class="legend-dot" style="background: #E89C5C;"></span>
+                        <span>Your Cumulative Donations</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-dot" style="background: #228B22;"></span>
+                        <span>Portfolio Value (with compounding)</span>
+                    </div>
+                </div>
+                
+                <div class="milestone-alert" id="milestoneAlert" style="display: none;">
+                    <svg viewBox="0 0 24 24" class="alert-icon">
+                        <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="currentColor"/>
+                        <path d="M2 17L12 22L22 17M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" fill="none"/>
+                    </svg>
+                    <div>
+                        <strong>Milestone Reached!</strong>
+                        <p>Your portfolio now generates more annual impact than your yearly donations</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Breakdown Section -->
+            <div class="breakdown-grid">
+                <div class="breakdown-card">
+                    <h3 class="breakdown-title">Fund Allocation</h3>
+                    <div class="allocation-list">
+                        <div class="allocation-item">
+                            <div class="allocation-label">
+                                <span class="allocation-dot reinvest"></span>
+                                <span>Reinvested (Compounding)</span>
+                            </div>
+                            <span class="allocation-percent">50%</span>
+                        </div>
+                        <div class="allocation-item">
+                            <div class="allocation-label">
+                                <span class="allocation-dot causes"></span>
+                                <span>Your Chosen Causes</span>
+                            </div>
+                            <span class="allocation-percent">40%</span>
+                        </div>
+                        <div class="allocation-item">
+                            <div class="allocation-label">
+                                <span class="allocation-dot maintenance"></span>
+                                <span>Foundation Maintenance</span>
+                            </div>
+                            <span class="allocation-percent">10%</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="breakdown-card">
+                    <h3 class="breakdown-title">Your Cause Distribution</h3>
+                    <p class="breakdown-description">40% of dividends split across your themes</p>
+                    <div class="causes-list" id="causesList"></div>
+                </div>
+            </div>
+            
+            <!-- Add Donation Section -->
+            <div class="add-donation-section">
+                <h2 class="section-title">Add a Donation</h2>
+                <form id="donationForm" class="donation-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="donationAmount">Amount ($)</label>
+                            <input type="number" id="donationAmount" min="1" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="donationDate">Date</label>
+                            <input type="date" id="donationDate" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="submit-button">Add Donation</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+    <script src="impact.js"></script>
+</body>
+</html>

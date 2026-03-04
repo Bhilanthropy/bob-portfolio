@@ -174,9 +174,16 @@
     border-radius: 12px;
     padding: 2rem;
     transition: all 0.3s ease;
+    text-decoration: none;
+    color: inherit;
+    display: block;
 }
 
-.placeholder-card:hover {
+.placeholder-card.clickable {
+    cursor: pointer;
+}
+
+.placeholder-card.clickable:hover {
     background: rgba(245, 241, 232, 0.08);
     border-color: rgba(245, 241, 232, 0.2);
     transform: translateY(-4px);
@@ -185,6 +192,13 @@
 .placeholder-icon {
     font-size: 3rem;
     margin-bottom: 1rem;
+    color: var(--golden-orange);
+}
+
+.custom-icon {
+    width: 80px;
+    height: 80px;
+    color: var(--golden-orange);
 }
 
 .placeholder-card h3 {
