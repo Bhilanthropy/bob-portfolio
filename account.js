@@ -207,10 +207,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         welcomeModal.classList.add('active');
         
-        // Auto-redirect after 10 seconds
+        // Auto-redirect after 5 seconds
         const autoRedirect = setTimeout(() => {
             window.location.href = 'dashboard.html';
-        }, 10000);
+        }, 5000);
         
         // Allow click to skip
         welcomeModal.addEventListener('click', function() {

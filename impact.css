@@ -28,8 +28,8 @@
 /* Metrics Grid */
 .metrics-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
     margin-bottom: 4rem;
 }
 
@@ -279,6 +279,99 @@
     padding: 3rem;
 }
 
+/* Prediction Section */
+.prediction-section {
+    background: rgba(50, 205, 50, 0.05);
+    border: 1px solid rgba(50, 205, 50, 0.2);
+    border-radius: 16px;
+    padding: 3rem;
+    margin-bottom: 3rem;
+}
+
+.prediction-calculator {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.calculator-inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 1.5rem;
+    align-items: end;
+    margin-bottom: 2rem;
+}
+
+.calculator-inputs .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.calculator-inputs label {
+    font-size: 0.9rem;
+    font-weight: 300;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+}
+
+.calculator-inputs input {
+    background: rgba(245, 241, 232, 0.08);
+    border: 1px solid rgba(245, 241, 232, 0.2);
+    border-radius: 4px;
+    padding: 1rem;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 1rem;
+    color: var(--text-primary);
+    transition: all 0.3s ease;
+}
+
+.calculator-inputs input:focus {
+    outline: none;
+    border-color: #32CD32;
+    background: rgba(245, 241, 232, 0.12);
+}
+
+.calculator-inputs .submit-button {
+    margin-top: 0;
+}
+
+.prediction-results {
+    margin-top: 2rem;
+}
+
+.result-metrics {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.result-card {
+    background: rgba(245, 241, 232, 0.05);
+    border: 1px solid rgba(245, 241, 232, 0.1);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.result-card h4 {
+    font-size: 0.85rem;
+    font-weight: 300;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+}
+
+.result-value {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2rem;
+    font-weight: 300;
+    color: #32CD32;
+    margin: 0;
+}
+
 .donation-form {
     max-width: 600px;
     margin: 2rem auto 0;
@@ -341,6 +434,14 @@
     }
     
     .donation-form .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .calculator-inputs {
+        grid-template-columns: 1fr;
+    }
+    
+    .result-metrics {
         grid-template-columns: 1fr;
     }
 }

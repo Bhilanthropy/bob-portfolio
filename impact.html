@@ -40,8 +40,21 @@
                         </svg>
                     </div>
                     <h3 class="metric-label">Total Donated</h3>
-                    <p class="metric-value" id="totalDonated">$0</p>
+                    <p class="metric-value" id="totalDonated">€0</p>
                     <p class="metric-change">Since joining</p>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        <svg viewBox="0 0 100 100" class="icon-monthly">
+                            <rect x="20" y="60" width="15" height="20" fill="currentColor" opacity="0.4"/>
+                            <rect x="42" y="50" width="15" height="30" fill="currentColor" opacity="0.6"/>
+                            <rect x="64" y="35" width="15" height="45" fill="currentColor" opacity="0.8"/>
+                        </svg>
+                    </div>
+                    <h3 class="metric-label">Monthly Donations</h3>
+                    <p class="metric-value" id="monthlyDonations">€0</p>
+                    <p class="metric-change">Last 12 months avg</p>
                 </div>
                 
                 <div class="metric-card highlight">
@@ -52,7 +65,7 @@
                         </svg>
                     </div>
                     <h3 class="metric-label">Portfolio Value</h3>
-                    <p class="metric-value" id="portfolioValue">$0</p>
+                    <p class="metric-value" id="portfolioValue">€0</p>
                     <p class="metric-change" id="portfolioGrowth">+0% growth</p>
                 </div>
                 
@@ -65,7 +78,7 @@
                         </svg>
                     </div>
                     <h3 class="metric-label">Annual Impact</h3>
-                    <p class="metric-value" id="annualImpact">$0</p>
+                    <p class="metric-value" id="annualImpact">€0</p>
                     <p class="metric-change">Distributed to causes</p>
                 </div>
             </div>
@@ -138,6 +151,73 @@
                     <h3 class="breakdown-title">Your Cause Distribution</h3>
                     <p class="breakdown-description">40% of dividends split across your themes</p>
                     <div class="causes-list" id="causesList"></div>
+                </div>
+                
+                <div class="breakdown-card">
+                    <h3 class="breakdown-title">Cumulative Spending</h3>
+                    <p class="breakdown-description">Total distributed from dividends</p>
+                    <div class="allocation-list">
+                        <div class="allocation-item">
+                            <div class="allocation-label">
+                                <span class="allocation-dot reinvest"></span>
+                                <span>Total Reinvested</span>
+                            </div>
+                            <span class="allocation-percent" id="totalReinvested">€0</span>
+                        </div>
+                        <div class="allocation-item">
+                            <div class="allocation-label">
+                                <span class="allocation-dot causes"></span>
+                                <span>Total to Causes</span>
+                            </div>
+                            <span class="allocation-percent" id="totalCauses">€0</span>
+                        </div>
+                        <div class="allocation-item">
+                            <div class="allocation-label">
+                                <span class="allocation-dot maintenance"></span>
+                                <span>Total Maintenance</span>
+                            </div>
+                            <span class="allocation-percent" id="totalMaintenance">€0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Future Prediction Calculator -->
+            <div class="prediction-section">
+                <h2 class="section-title">Future Impact Projection</h2>
+                <p class="section-description">
+                    See how adjusting your monthly donation will impact your portfolio's growth and philanthropic reach.
+                </p>
+                
+                <div class="prediction-calculator">
+                    <div class="calculator-inputs">
+                        <div class="form-group">
+                            <label for="newMonthlyAmount">New Monthly Amount (€)</label>
+                            <input type="number" id="newMonthlyAmount" min="1" step="1" value="20" placeholder="15">
+                        </div>
+                        <div class="form-group">
+                            <label for="projectionYears">Years to Project</label>
+                            <input type="number" id="projectionYears" min="1" max="30" value="10" placeholder="10">
+                        </div>
+                        <button id="calculatePrediction" class="submit-button">Calculate Future Impact</button>
+                    </div>
+                    
+                    <div class="prediction-results" id="predictionResults" style="display: none;">
+                        <div class="result-metrics">
+                            <div class="result-card">
+                                <h4>Projected Portfolio Value</h4>
+                                <p class="result-value" id="futurePortfolioValue">€0</p>
+                            </div>
+                            <div class="result-card">
+                                <h4>Projected Annual Impact</h4>
+                                <p class="result-value" id="futureAnnualImpact">€0</p>
+                            </div>
+                        </div>
+                        
+                        <div class="chart-container" style="height: 350px; margin-top: 2rem;">
+                            <canvas id="predictionChart"></canvas>
+                        </div>
+                    </div>
                 </div>
             </div>
             
