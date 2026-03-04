@@ -76,6 +76,9 @@ document.addEventListener('DOMContentLoaded', function() {
     displayCausesBreakdown(userData.themes, donations);
     displayMonthlyAverage(donations);
     
+    // Setup reset demo data button
+    setupResetDemoData();
+    
     // Setup donation form
     setupDonationForm();
     
@@ -518,6 +521,22 @@ function setupDonationForm() {
         
         // Show success feedback
         alert('Donation added successfully!');
+    });
+}
+
+function setupResetDemoData() {
+    const resetBtn = document.getElementById('resetDemoData');
+    if (!resetBtn) return;
+    
+    resetBtn.addEventListener('click', function() {
+        if (confirm('Reset to demo data? This will replace your current donation history with 7.5 years of sample data.')) {
+            // Generate fresh demo data
+            const sampleDonations = generateRealisticDonations();
+            localStorage.setItem('donations', JSON.stringify(sampleDonations));
+            
+            // Reload page to show new data
+            location.reload();
+        }
     });
 }
 
