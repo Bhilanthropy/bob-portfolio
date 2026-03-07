@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Impact Dashboard - 4H</title>
+    <title>Impact Dashboard - Bob</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="dashboard.css">
     <link rel="stylesheet" href="impact.css">
@@ -14,22 +14,30 @@
 </head>
 <body class="dashboard-page">
     <div class="gradient-background" id="gradientBg"></div>
-    
+
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="toast-container"></div>
+
     <div class="dashboard-wrapper">
         <header class="dashboard-header">
-            <h1 class="logo">4H</h1>
+            <h1 class="logo">Bob</h1>
             <nav class="dashboard-nav">
                 <a href="dashboard.html">Dashboard</a>
                 <a href="#" id="logoutBtn">Logout</a>
             </nav>
         </header>
-        
+
         <div class="impact-content">
             <div class="impact-header">
                 <h1 class="page-title">Your Impact Dashboard</h1>
-                <p class="page-subtitle">Watch your philanthropic legacy grow</p>
+                <p class="page-subtitle">
+                    Watch your philanthropic legacy grow
+                    <span class="years-badge" id="yearsGivingBadge" style="display: none;">
+                        · <span id="yearsGiving"></span> of giving
+                    </span>
+                </p>
             </div>
-            
+
             <!-- Key Metrics -->
             <div class="metrics-grid">
                 <div class="metric-card">
@@ -43,7 +51,7 @@
                     <p class="metric-value" id="totalDonated">€0</p>
                     <p class="metric-change">Since joining</p>
                 </div>
-                
+
                 <div class="metric-card">
                     <div class="metric-icon">
                         <svg viewBox="0 0 100 100" class="icon-monthly">
@@ -52,11 +60,11 @@
                             <rect x="64" y="35" width="15" height="45" fill="currentColor" opacity="0.8"/>
                         </svg>
                     </div>
-                    <h3 class="metric-label">Monthly Donations</h3>
+                    <h3 class="metric-label">Monthly Average</h3>
                     <p class="metric-value" id="monthlyDonations">€0</p>
-                    <p class="metric-change">Last 12 months avg</p>
+                    <p class="metric-change">Last 12 months</p>
                 </div>
-                
+
                 <div class="metric-card highlight">
                     <div class="metric-icon">
                         <svg viewBox="0 0 100 100" class="icon-growth">
@@ -68,7 +76,7 @@
                     <p class="metric-value" id="portfolioValue">€0</p>
                     <p class="metric-change" id="portfolioGrowth">+0% growth</p>
                 </div>
-                
+
                 <div class="metric-card">
                     <div class="metric-icon">
                         <svg viewBox="0 0 100 100" class="icon-impact">
@@ -82,14 +90,14 @@
                     <p class="metric-change">Distributed to causes</p>
                 </div>
             </div>
-            
+
             <!-- Compounding Chart -->
             <div class="chart-section">
                 <div class="chart-header">
                     <div>
                         <h2 class="section-title">Growth Over Time</h2>
                         <p class="section-description">
-                            Your donations are invested wisely. 50% of dividends are reinvested for compounding growth, 
+                            Your donations are invested wisely. 50% of dividends are reinvested for compounding growth,
                             40% goes directly to your chosen causes, and 10% covers operational costs.
                         </p>
                     </div>
@@ -98,13 +106,13 @@
                         <button id="viewYearly" class="toggle-btn">Yearly</button>
                     </div>
                 </div>
-                
+
                 <div class="chart-container">
                     <canvas id="compoundingChart"></canvas>
                 </div>
-                
-                <p class="chart-note">💡 Click legend items to show/hide lines</p>
-                
+
+                <p class="chart-note">Click legend items to show/hide lines</p>
+
                 <div class="milestone-alert" id="milestoneAlert" style="display: none;">
                     <svg viewBox="0 0 24 24" class="alert-icon">
                         <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="currentColor"/>
@@ -116,44 +124,52 @@
                     </div>
                 </div>
             </div>
-            
-            <!-- Breakdown Section -->
+
+            <!-- Impact Breakdown -->
             <div class="breakdown-grid">
+                <!-- Fund Allocation with Donut Chart -->
                 <div class="breakdown-card">
                     <h3 class="breakdown-title">Fund Allocation</h3>
-                    <div class="allocation-list">
-                        <div class="allocation-item">
-                            <div class="allocation-label">
-                                <span class="allocation-dot reinvest"></span>
-                                <span>Reinvested (Compounding)</span>
-                            </div>
-                            <span class="allocation-percent">50%</span>
+                    <div class="allocation-visual">
+                        <div class="donut-chart-wrapper">
+                            <canvas id="allocationChart"></canvas>
                         </div>
-                        <div class="allocation-item">
-                            <div class="allocation-label">
-                                <span class="allocation-dot causes"></span>
-                                <span>Your Chosen Causes</span>
+                        <div class="allocation-list">
+                            <div class="allocation-item">
+                                <div class="allocation-label">
+                                    <span class="allocation-dot reinvest"></span>
+                                    <span>Reinvested</span>
+                                </div>
+                                <span class="allocation-percent">50%</span>
                             </div>
-                            <span class="allocation-percent">40%</span>
-                        </div>
-                        <div class="allocation-item">
-                            <div class="allocation-label">
-                                <span class="allocation-dot maintenance"></span>
-                                <span>Foundation Maintenance</span>
+                            <div class="allocation-item">
+                                <div class="allocation-label">
+                                    <span class="allocation-dot causes"></span>
+                                    <span>Your Causes</span>
+                                </div>
+                                <span class="allocation-percent">40%</span>
                             </div>
-                            <span class="allocation-percent">10%</span>
+                            <div class="allocation-item">
+                                <div class="allocation-label">
+                                    <span class="allocation-dot maintenance"></span>
+                                    <span>Maintenance</span>
+                                </div>
+                                <span class="allocation-percent">10%</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-                
+
+                <!-- Cause Distribution -->
                 <div class="breakdown-card">
                     <h3 class="breakdown-title">Your Cause Distribution</h3>
                     <p class="breakdown-description">40% of dividends split across your themes</p>
                     <div class="causes-list" id="causesList"></div>
                 </div>
-                
+
+                <!-- Cumulative Totals -->
                 <div class="breakdown-card">
-                    <h3 class="breakdown-title">Cumulative Spending</h3>
+                    <h3 class="breakdown-title">Cumulative Impact</h3>
                     <p class="breakdown-description">Total distributed from dividends</p>
                     <div class="allocation-list">
                         <div class="allocation-item">
@@ -180,33 +196,48 @@
                     </div>
                 </div>
             </div>
-            
+
+            <!-- Donation History (NEW) -->
+            <div class="history-section">
+                <div class="history-header">
+                    <div>
+                        <h2 class="section-title">Donation History</h2>
+                        <p class="section-description">Your giving journey over time</p>
+                    </div>
+                    <span class="history-count-badge" id="donationCount"></span>
+                </div>
+                <div class="history-list" id="donationHistoryList"></div>
+                <button id="toggleHistory" class="toggle-history-btn" style="display: none;">
+                    Show all donations
+                </button>
+            </div>
+
             <!-- Future Prediction Calculator -->
             <div class="prediction-section">
                 <h2 class="section-title">Future Impact Projection</h2>
                 <p class="section-description">
-                    See how adjusting your monthly donation will impact your portfolio's growth and philanthropic reach.
+                    See how adjusting your monthly donation will shape your portfolio's growth and philanthropic reach.
                 </p>
-                
+
                 <div class="prediction-calculator">
                     <div class="calculator-inputs">
                         <div class="form-group">
                             <label for="newMonthlyAmount">New Monthly Amount (€)</label>
-                            <input type="number" id="newMonthlyAmount" min="1" step="1" value="20" placeholder="15">
+                            <input type="number" id="newMonthlyAmount" min="1" step="1" value="20" placeholder="20">
                         </div>
                         <div class="form-group">
                             <label for="projectionYears">Years to Project</label>
                             <input type="number" id="projectionYears" min="1" max="30" value="10" placeholder="10">
                         </div>
-                        <button id="calculatePrediction" class="submit-button">Calculate Future Impact</button>
+                        <button id="calculatePrediction" class="submit-button">Calculate</button>
                     </div>
-                    
+
                     <div class="prediction-results" id="predictionResults" style="display: none;">
                         <h3 class="comparison-title">Scenario Comparison</h3>
-                        
+
                         <div class="comparison-grid">
                             <div class="scenario-card current">
-                                <h4>Current Scenario</h4>
+                                <h4>Current Pace</h4>
                                 <div class="scenario-metrics">
                                     <div class="metric">
                                         <span class="metric-label">Portfolio Value</span>
@@ -218,7 +249,7 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="scenario-card new">
                                 <h4>New Scenario</h4>
                                 <div class="scenario-metrics">
@@ -232,7 +263,7 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="scenario-card difference">
                                 <h4>Difference</h4>
                                 <div class="scenario-metrics">
@@ -247,22 +278,23 @@
                                 </div>
                             </div>
                         </div>
-                        
-                        <div class="chart-container" style="height: 350px; margin-top: 2rem;">
+
+                        <div class="chart-container" style="height: 300px; margin-top: 2rem;">
                             <canvas id="predictionChart"></canvas>
                         </div>
                     </div>
                 </div>
             </div>
-            
+
             <!-- Add Donation Section -->
             <div class="add-donation-section">
                 <h2 class="section-title">Add a Donation</h2>
+                <p class="section-description">Record a new contribution to your philanthropic portfolio</p>
                 <form id="donationForm" class="donation-form">
                     <div class="form-row">
                         <div class="form-group">
                             <label for="donationAmount">Amount (€)</label>
-                            <input type="number" id="donationAmount" min="1" step="0.01" required>
+                            <input type="number" id="donationAmount" min="1" step="0.01" required placeholder="0.00">
                         </div>
                         <div class="form-group">
                             <label for="donationDate">Date</label>
@@ -271,15 +303,15 @@
                     </div>
                     <button type="submit" class="submit-button">Add Donation</button>
                 </form>
-                
+
                 <div class="demo-data-reset">
-                    <p class="reset-description">Want to see demo data? Reset to 7.5 years of sample donations with compounding effects.</p>
+                    <p class="reset-description">Want to explore with demo data? Reset to 7.5 years of sample donations with compounding effects.</p>
                     <button id="resetDemoData" class="reset-button">Reset to Demo Data</button>
                 </div>
             </div>
         </div>
     </div>
-    
+
     <script src="script.js"></script>
     <script src="impact.js"></script>
 </body>

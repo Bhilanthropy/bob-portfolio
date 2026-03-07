@@ -3,11 +3,13 @@
     --deep-red: #8B2E1F;
     --burnt-orange: #D4662A;
     --warm-yellow: #E8A65D;
+    --golden-orange: #E89C5C;
     --forest-green: #3A5A40;
     --dark-olive: #2D3A2E;
     --cream: #F5F1E8;
     --text-primary: #F5F1E8;
     --text-secondary: rgba(245, 241, 232, 0.7);
+    --dark-earth: #1a1220;
 }
 
 /* Reset and Base Styles */
