@@ -1,28 +1,138 @@
-// Generate realistic 7.5 years of donation data
+// ── Date filter state ──────────────────────────────────────────────────────
+let _impactFilterRange = 'all';
+let _impactFilterFrom  = null;
+let _impactFilterTo    = null;
+let _impactUserData    = null;
+
+function getFilteredDonations() {
+    const all = JSON.parse(localStorage.getItem('donations') || '[]');
+    if (_impactFilterRange === 'all') return all;
+
+    const today = new Date();
+
+    if (_impactFilterRange === 'custom') {
+        const from = _impactFilterFrom ? new Date(_impactFilterFrom) : null;
+        const to   = _impactFilterTo   ? new Date(_impactFilterTo)   : today;
+        return all.filter(d => {
+            const date = new Date(d.date);
+            return (!from || date >= from) && date <= to;
+        });
+    }
+
+    const from = new Date(today);
+    if (_impactFilterRange === '1y') from.setFullYear(from.getFullYear() - 1);
+    if (_impactFilterRange === '3y') from.setFullYear(from.getFullYear() - 3);
+    return all.filter(d => new Date(d.date) >= from);
+}
+
+function refreshImpactDisplays() {
+    const donations = getFilteredDonations();
+    displayMetrics(donations);
+    displayChart(donations);
+    if (_impactUserData) displayCausesBreakdown(_impactUserData.themes, donations);
+    displayDonationHistory(donations);
+    setupHistoryToggle(donations);
+}
+
+function setupDateFilter() {
+    const presets     = document.querySelectorAll('.filter-preset');
+    const customPanel = document.getElementById('filterCustom');
+    const applyBtn    = document.getElementById('applyFilter');
+
+    if (!presets.length) return;
+
+    presets.forEach(btn => {
+        btn.addEventListener('click', function () {
+            presets.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            _impactFilterRange = this.dataset.range;
+
+            if (customPanel) {
+                customPanel.classList.toggle('filter-custom-visible', _impactFilterRange === 'custom');
+            }
+
+            if (_impactFilterRange !== 'custom') {
+                refreshImpactDisplays();
+            }
+        });
+    });
+
+    if (applyBtn) {
+        applyBtn.addEventListener('click', function () {
+            _impactFilterFrom = document.getElementById('filterFrom')?.value || null;
+            _impactFilterTo   = document.getElementById('filterTo')?.value   || null;
+            refreshImpactDisplays();
+        });
+    }
+}
+
+// ── Public entry point (called by dashboard.js) ───────────────────────────
+window.initImpactDashboard = function (userData) {
+    _impactUserData = userData;
+
+    if (!localStorage.getItem('donations')) {
+        localStorage.setItem('donations', JSON.stringify(generateRealisticDonations()));
+    }
+
+    const donations = getFilteredDonations();
+
+    displayMetrics(donations);
+    displayChart(donations);
+    displayAllocationChart();
+    displayCausesBreakdown(userData.themes, donations);
+    displayDonationHistory(donations);
+    setupResetDemoData();
+    setupDonationForm();
+    setupPredictionCalculator();
+    setupHistoryToggle(donations);
+    setupDateFilter();
+};
+
+// ── Auto-init for standalone impact.html ─────────────────────────────────
+document.addEventListener('DOMContentLoaded', function () {
+    // Skip if running inside the dashboard SPA (dashboard.js handles init)
+    if (document.querySelector('.content-tabs')) return;
+
+    const isLoggedIn = localStorage.getItem('isLoggedIn');
+    if (!isLoggedIn) {
+        window.location.href = 'index.html';
+        return;
+    }
+
+    const userData = JSON.parse(localStorage.getItem('user'));
+    if (userData && window.initImpactDashboard) {
+        window.initImpactDashboard(userData);
+    }
+
+    document.getElementById('logoutBtn')?.addEventListener('click', function (e) {
+        e.preventDefault();
+        localStorage.removeItem('isLoggedIn');
+        window.location.href = 'index.html';
+    });
+});
+
+// ── Demo data generator ───────────────────────────────────────────────────
 function generateRealisticDonations() {
     const donations = [];
     const startDate = new Date();
     startDate.setFullYear(startDate.getFullYear() - 7);
-    startDate.setMonth(startDate.getMonth() - 6); // 7.5 years ago
+    startDate.setMonth(startDate.getMonth() - 6);
 
     const monthlyAmounts = [
-        15, 15, 20, 15, 15, 10, 15, 20, 15, 15, 15, 20,  // Year 1
-        15, 15, 25, 30, 35, 35, 30, 25, 20, 15, 15, 15,  // Year 2 (peak period)
-        15, 15, 10, 10, 15, 15, 20, 15, 15, 15, 20, 25,  // Year 3
-        15, 15, 15, 20, 25, 30, 35, 30, 25, 20, 15, 15,  // Year 4 (another peak)
-        10, 10, 15, 15, 15, 20, 15, 15, 10, 10, 15, 15,  // Year 5 (lower period)
-        15, 15, 20, 25, 30, 30, 25, 20, 15, 15, 15, 20,  // Year 6
-        15, 15, 15, 20, 15, 15, 15, 20, 25, 30, 20, 15,  // Year 7
-        15, 15, 20, 15, 15, 10                             // Year 7.5 (6 months)
+        15, 15, 20, 15, 15, 10, 15, 20, 15, 15, 15, 20,
+        15, 15, 25, 30, 35, 35, 30, 25, 20, 15, 15, 15,
+        15, 15, 10, 10, 15, 15, 20, 15, 15, 15, 20, 25,
+        15, 15, 15, 20, 25, 30, 35, 30, 25, 20, 15, 15,
+        10, 10, 15, 15, 15, 20, 15, 15, 10, 10, 15, 15,
+        15, 15, 20, 25, 30, 30, 25, 20, 15, 15, 15, 20,
+        15, 15, 15, 20, 15, 15, 15, 20, 25, 30, 20, 15,
+        15, 15, 20, 15, 15, 10
     ];
 
     for (let i = 0; i < monthlyAmounts.length; i++) {
         const donationDate = new Date(startDate);
         donationDate.setMonth(donationDate.getMonth() + i);
-        donations.push({
-            amount: monthlyAmounts[i],
-            date: donationDate.toISOString().split('T')[0]
-        });
+        donations.push({ amount: monthlyAmounts[i], date: donationDate.toISOString().split('T')[0] });
     }
 
     const largerDonations = [
@@ -36,17 +146,14 @@ function generateRealisticDonations() {
         const donationDate = new Date(startDate);
         donationDate.setMonth(donationDate.getMonth() + large.monthOffset);
         donationDate.setDate(15);
-        donations.push({
-            amount: large.amount,
-            date: donationDate.toISOString().split('T')[0]
-        });
+        donations.push({ amount: large.amount, date: donationDate.toISOString().split('T')[0] });
     });
 
     donations.sort((a, b) => new Date(a.date) - new Date(b.date));
     return donations;
 }
 
-// Toast notification system
+// ── Toast ─────────────────────────────────────────────────────────────────
 function showToast(message, type = 'success') {
     const container = document.getElementById('toastContainer');
     if (!container) return;
@@ -56,7 +163,6 @@ function showToast(message, type = 'success') {
     toast.textContent = message;
     container.appendChild(toast);
 
-    // Trigger transition
     requestAnimationFrame(() => {
         requestAnimationFrame(() => toast.classList.add('toast-visible'));
     });
@@ -67,73 +173,38 @@ function showToast(message, type = 'success') {
     }, 3000);
 }
 
-// Impact Dashboard Logic
-document.addEventListener('DOMContentLoaded', function() {
-    const isLoggedIn = localStorage.getItem('isLoggedIn');
-    if (!isLoggedIn) {
-        window.location.href = 'index.html';
-        return;
-    }
-
-    const userData = JSON.parse(localStorage.getItem('user'));
-
-    if (!localStorage.getItem('donations')) {
-        const sampleDonations = generateRealisticDonations();
-        localStorage.setItem('donations', JSON.stringify(sampleDonations));
-    }
-
-    const donations = JSON.parse(localStorage.getItem('donations'));
-
-    displayMetrics(donations);
-    displayChart(donations);
-    displayAllocationChart();
-    displayCausesBreakdown(userData.themes, donations);
-    displayDonationHistory(donations);
-    setupResetDemoData();
-    setupDonationForm();
-    setupPredictionCalculator();
-    setupHistoryToggle(donations);
-
-    document.getElementById('logoutBtn')?.addEventListener('click', function(e) {
-        e.preventDefault();
-        localStorage.removeItem('isLoggedIn');
-        window.location.href = 'index.html';
-    });
-});
-
+// ── Core calculation ──────────────────────────────────────────────────────
 function calculateCompounding(donations) {
     const ANNUAL_DIVIDEND_RATE = 0.05;
-    const REINVEST_RATE = 0.50;
-    const CAUSES_RATE = 0.40;
+    const REINVEST_RATE        = 0.50;
+    const CAUSES_RATE          = 0.40;
 
-    const sortedDonations = [...donations].sort((a, b) =>
-        new Date(a.date) - new Date(b.date)
-    );
+    const sortedDonations = [...donations].sort((a, b) => new Date(a.date) - new Date(b.date));
 
     if (sortedDonations.length === 0) {
         return { dataPoints: [], totalDonated: 0, portfolioValue: 0, annualImpact: 0, totalDividends: 0 };
     }
 
     const startDate = new Date(sortedDonations[0].date);
-    const today = new Date();
+    const today     = new Date();
 
-    const dataPoints = [];
-    let portfolioValue = 0;
-    let cumulativeDonations = 0;
-    let cumulativeDividends = 0;
-    let currentDate = new Date(startDate);
-    let donationIndex = 0;
+    const dataPoints          = [];
+    let portfolioValue        = 0;
+    let cumulativeDonations   = 0;
+    let cumulativeDividends   = 0;
+    let currentDate           = new Date(startDate);
+    let donationIndex         = 0;
 
     while (currentDate <= today) {
         const monthStr = currentDate.toISOString().slice(0, 7);
-        const yearStr = currentDate.getFullYear().toString();
+        const yearStr  = currentDate.getFullYear().toString();
 
         while (donationIndex < sortedDonations.length) {
             const donationDate = new Date(sortedDonations[donationIndex].date);
             if (donationDate.getFullYear() === currentDate.getFullYear() &&
-                donationDate.getMonth() === currentDate.getMonth()) {
+                donationDate.getMonth()    === currentDate.getMonth()) {
                 const amount = sortedDonations[donationIndex].amount;
-                portfolioValue += amount;
+                portfolioValue      += amount;
                 cumulativeDonations += amount;
                 donationIndex++;
             } else {
@@ -142,60 +213,52 @@ function calculateCompounding(donations) {
         }
 
         const monthlyDividend = portfolioValue * (ANNUAL_DIVIDEND_RATE / 12);
-        const reinvestAmount = monthlyDividend * REINVEST_RATE;
-        portfolioValue += reinvestAmount;
-        cumulativeDividends += monthlyDividend;
+        const reinvestAmount  = monthlyDividend * REINVEST_RATE;
+        portfolioValue        += reinvestAmount;
+        cumulativeDividends   += monthlyDividend;
 
         dataPoints.push({
-            date: monthStr,
-            year: yearStr,
+            date:      monthStr,
+            year:      yearStr,
             donations: Math.round(cumulativeDonations * 100) / 100,
             dividends: Math.round(cumulativeDividends * 100) / 100,
-            portfolio: Math.round(portfolioValue * 100) / 100
+            portfolio: Math.round(portfolioValue * 100)      / 100
         });
 
         currentDate.setMonth(currentDate.getMonth() + 1);
     }
 
     const annualDividend = portfolioValue * ANNUAL_DIVIDEND_RATE;
-    const annualImpact = annualDividend * CAUSES_RATE;
+    const annualImpact   = annualDividend * CAUSES_RATE;
 
     return {
         dataPoints,
-        totalDonated: cumulativeDonations,
+        totalDonated:   cumulativeDonations,
         portfolioValue: Math.round(portfolioValue * 100) / 100,
-        annualImpact: Math.round(annualImpact * 100) / 100,
+        annualImpact:   Math.round(annualImpact   * 100) / 100,
         totalDividends: Math.round(cumulativeDividends * 100) / 100
     };
 }
 
+// ── Metrics display ───────────────────────────────────────────────────────
 function displayMetrics(donations) {
     const metrics = calculateCompounding(donations);
 
-    document.getElementById('totalDonated').textContent =
-        `€${metrics.totalDonated.toLocaleString()}`;
-
-    document.getElementById('portfolioValue').textContent =
-        `€${metrics.portfolioValue.toLocaleString()}`;
+    document.getElementById('totalDonated').textContent   = `€${metrics.totalDonated.toLocaleString()}`;
+    document.getElementById('portfolioValue').textContent = `€${metrics.portfolioValue.toLocaleString()}`;
 
     const growthPercent = metrics.totalDonated > 0
         ? ((metrics.portfolioValue - metrics.totalDonated) / metrics.totalDonated * 100).toFixed(1)
         : 0;
-    document.getElementById('portfolioGrowth').textContent =
-        `+${growthPercent}% growth`;
+    document.getElementById('portfolioGrowth').textContent = `+${growthPercent}% growth`;
+    document.getElementById('annualImpact').textContent    = `€${metrics.annualImpact.toLocaleString()}`;
 
-    document.getElementById('annualImpact').textContent =
-        `€${metrics.annualImpact.toLocaleString()}`;
-
-    const monthlyAvg = calculateMonthlyAverage(donations);
+    const monthlyAvg     = calculateMonthlyAverage(donations);
     const monthlyElement = document.getElementById('monthlyDonations');
-    if (monthlyElement) {
-        monthlyElement.textContent = `€${monthlyAvg.toFixed(0)}`;
-    }
+    if (monthlyElement) monthlyElement.textContent = `€${monthlyAvg.toFixed(0)}`;
 
-    // Show years of giving in header
-    const years = getYearsSinceFirstDonation(donations);
-    const yearsGivingEl = document.getElementById('yearsGiving');
+    const years          = getYearsSinceFirstDonation(donations);
+    const yearsGivingEl  = document.getElementById('yearsGiving');
     const yearsGivingBadge = document.getElementById('yearsGivingBadge');
     if (yearsGivingEl && years > 0) {
         const yearsLabel = years >= 1
@@ -206,8 +269,10 @@ function displayMetrics(donations) {
     }
 
     const avgAnnualDonation = metrics.totalDonated / Math.max(1, getYearsSinceFirstDonation(donations));
-    if (metrics.annualImpact > avgAnnualDonation && metrics.dataPoints.length > 12) {
-        document.getElementById('milestoneAlert').style.display = 'flex';
+    const milestoneEl = document.getElementById('milestoneAlert');
+    if (milestoneEl) {
+        milestoneEl.style.display =
+            (metrics.annualImpact > avgAnnualDonation && metrics.dataPoints.length > 12) ? 'flex' : 'none';
     }
 
     displayCumulativeSpending(metrics);
@@ -215,66 +280,55 @@ function displayMetrics(donations) {
 
 function calculateMonthlyAverage(donations) {
     if (donations.length === 0) return 0;
-
-    const today = new Date();
+    const today          = new Date();
     const twelveMonthsAgo = new Date(today);
     twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
-
-    const recentDonations = donations.filter(d =>
-        new Date(d.date) >= twelveMonthsAgo
-    );
-
-    if (recentDonations.length === 0) return 0;
-
-    const total = recentDonations.reduce((sum, d) => sum + d.amount, 0);
-    return total / 12;
+    const recent = donations.filter(d => new Date(d.date) >= twelveMonthsAgo);
+    if (recent.length === 0) return 0;
+    return recent.reduce((sum, d) => sum + d.amount, 0) / 12;
 }
 
 function displayCumulativeSpending(metrics) {
     const totalDividendsPaid = metrics.portfolioValue - metrics.totalDonated;
+    const totalReinvested    = totalDividendsPaid * 0.50;
+    const totalToCauses      = totalDividendsPaid * 0.40;
+    const totalMaintenance   = totalDividendsPaid * 0.10;
 
-    const totalReinvested = totalDividendsPaid * 0.50;
-    const totalToCauses = totalDividendsPaid * 0.40;
-    const totalMaintenance = totalDividendsPaid * 0.10;
-
-    const reinvestedEl = document.getElementById('totalReinvested');
-    const causesEl = document.getElementById('totalCauses');
+    const reinvestedEl  = document.getElementById('totalReinvested');
+    const causesEl      = document.getElementById('totalCauses');
     const maintenanceEl = document.getElementById('totalMaintenance');
 
-    if (reinvestedEl) reinvestedEl.textContent = `€${Math.round(totalReinvested).toLocaleString()}`;
-    if (causesEl) causesEl.textContent = `€${Math.round(totalToCauses).toLocaleString()}`;
+    if (reinvestedEl)  reinvestedEl.textContent  = `€${Math.round(totalReinvested).toLocaleString()}`;
+    if (causesEl)      causesEl.textContent      = `€${Math.round(totalToCauses).toLocaleString()}`;
     if (maintenanceEl) maintenanceEl.textContent = `€${Math.round(totalMaintenance).toLocaleString()}`;
 }
 
 function getYearsSinceFirstDonation(donations) {
     if (donations.length === 0) return 1;
-    const sorted = [...donations].sort((a, b) => new Date(a.date) - new Date(b.date));
+    const sorted    = [...donations].sort((a, b) => new Date(a.date) - new Date(b.date));
     const firstDate = new Date(sorted[0].date);
-    const today = new Date();
-    return Math.max(0, (today - firstDate) / (365.25 * 24 * 60 * 60 * 1000));
+    return Math.max(0, (new Date() - firstDate) / (365.25 * 24 * 60 * 60 * 1000));
 }
 
-// Donut chart for fund allocation
+// ── Donut chart ───────────────────────────────────────────────────────────
 let allocationChartInstance = null;
 
 function displayAllocationChart() {
     const ctx = document.getElementById('allocationChart');
     if (!ctx) return;
 
-    if (allocationChartInstance) {
-        allocationChartInstance.destroy();
-    }
+    if (allocationChartInstance) allocationChartInstance.destroy();
 
     allocationChartInstance = new Chart(ctx, {
         type: 'doughnut',
         data: {
             labels: ['Reinvested (50%)', 'Your Causes (40%)', 'Maintenance (10%)'],
             datasets: [{
-                data: [50, 40, 10],
+                data:            [50, 40, 10],
                 backgroundColor: ['#32CD32', '#E89C5C', '#696969'],
-                borderColor: 'rgba(26, 18, 32, 0.8)',
-                borderWidth: 2,
-                hoverOffset: 8
+                borderColor:     'rgba(26, 18, 32, 0.8)',
+                borderWidth:     2,
+                hoverOffset:     8
             }]
         },
         options: {
@@ -286,32 +340,26 @@ function displayAllocationChart() {
                 tooltip: {
                     backgroundColor: 'rgba(26, 18, 32, 0.9)',
                     titleColor: '#F5F1E8',
-                    bodyColor: '#F5F1E8',
+                    bodyColor:  '#F5F1E8',
                     borderColor: 'rgba(245, 241, 232, 0.2)',
                     borderWidth: 1,
-                    callbacks: {
-                        label: function(context) {
-                            return ' ' + context.label;
-                        }
-                    }
+                    callbacks: { label: ctx => ' ' + ctx.label }
                 }
             }
         }
     });
 }
 
-let currentChartView = 'monthly';
+// ── Line chart ────────────────────────────────────────────────────────────
+let currentChartView     = 'monthly';
 let currentChartInstance = null;
 
 function displayChart(donations) {
     const metrics = calculateCompounding(donations);
-    const ctx = document.getElementById('compoundingChart');
-
+    const ctx     = document.getElementById('compoundingChart');
     if (!ctx) return;
 
-    if (currentChartInstance) {
-        currentChartInstance.destroy();
-    }
+    if (currentChartInstance) currentChartInstance.destroy();
 
     const chartData = currentChartView === 'monthly'
         ? prepareMonthlyData(metrics.dataPoints)
@@ -323,69 +371,64 @@ function displayChart(donations) {
             labels: chartData.labels,
             datasets: [
                 {
-                    label: 'Cumulative Donations',
-                    data: chartData.donations,
-                    borderColor: '#E89C5C',
+                    label:           'Cumulative Donations',
+                    data:            chartData.donations,
+                    borderColor:     '#E89C5C',
                     backgroundColor: 'rgba(232, 156, 92, 0.1)',
-                    borderWidth: 3,
-                    tension: 0.4,
-                    fill: false
+                    borderWidth:     3,
+                    tension:         0.4,
+                    fill:            false
                 },
                 {
-                    label: 'Cumulative Dividends',
-                    data: chartData.dividends,
-                    borderColor: '#4169E1',
+                    label:           'Cumulative Dividends',
+                    data:            chartData.dividends,
+                    borderColor:     '#4169E1',
                     backgroundColor: 'rgba(65, 105, 225, 0.1)',
-                    borderWidth: 3,
-                    tension: 0.4,
-                    fill: false
+                    borderWidth:     3,
+                    tension:         0.4,
+                    fill:            false
                 },
                 {
-                    label: 'Portfolio Value',
-                    data: chartData.portfolio,
-                    borderColor: '#228B22',
+                    label:           'Portfolio Value',
+                    data:            chartData.portfolio,
+                    borderColor:     '#228B22',
                     backgroundColor: 'rgba(34, 139, 34, 0.1)',
-                    borderWidth: 3,
-                    tension: 0.4,
-                    fill: false
+                    borderWidth:     3,
+                    tension:         0.4,
+                    fill:            false
                 }
             ]
         },
         options: {
-            responsive: true,
+            responsive:          true,
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    display: true,
+                    display:  true,
                     position: 'top',
                     labels: {
-                        color: '#F5F1E8',
-                        usePointStyle: true,
-                        padding: 15,
+                        color:          '#F5F1E8',
+                        usePointStyle:  true,
+                        padding:        15,
                         font: { size: 12, family: "'IBM Plex Sans', sans-serif" }
                     },
-                    onClick: function(e, legendItem, legend) {
-                        const index = legendItem.datasetIndex;
-                        const chart = legend.chart;
-                        const meta = chart.getDatasetMeta(index);
+                    onClick: function (e, legendItem, legend) {
+                        const meta = legend.chart.getDatasetMeta(legendItem.datasetIndex);
                         meta.hidden = !meta.hidden;
-                        chart.update();
+                        legend.chart.update();
                     }
                 },
                 tooltip: {
-                    mode: 'index',
-                    intersect: false,
+                    mode:            'index',
+                    intersect:       false,
                     backgroundColor: 'rgba(26, 18, 32, 0.9)',
-                    titleColor: '#F5F1E8',
-                    bodyColor: '#F5F1E8',
-                    borderColor: 'rgba(245, 241, 232, 0.2)',
-                    borderWidth: 1,
-                    padding: 12,
+                    titleColor:      '#F5F1E8',
+                    bodyColor:       '#F5F1E8',
+                    borderColor:     'rgba(245, 241, 232, 0.2)',
+                    borderWidth:     1,
+                    padding:         12,
                     callbacks: {
-                        label: function(context) {
-                            return context.dataset.label + ': €' +
-                                context.parsed.y.toLocaleString();
-                        }
+                        label: ctx => ctx.dataset.label + ': €' + ctx.parsed.y.toLocaleString()
                     }
                 }
             },
@@ -393,18 +436,14 @@ function displayChart(donations) {
                 y: {
                     beginAtZero: true,
                     ticks: {
-                        color: '#A89E8C',
-                        callback: function(value) { return '€' + value.toLocaleString(); }
+                        color:    '#A89E8C',
+                        callback: value => '€' + value.toLocaleString()
                     },
                     grid: { color: 'rgba(245, 241, 232, 0.1)' }
                 },
                 x: {
-                    ticks: {
-                        color: '#A89E8C',
-                        maxRotation: 45,
-                        minRotation: 45
-                    },
-                    grid: { color: 'rgba(245, 241, 232, 0.05)' }
+                    ticks: { color: '#A89E8C', maxRotation: 45, minRotation: 45 },
+                    grid:  { color: 'rgba(245, 241, 232, 0.05)' }
                 }
             },
             interaction: { mode: 'nearest', axis: 'x', intersect: false }
@@ -416,7 +455,7 @@ function displayChart(donations) {
 
 function prepareMonthlyData(dataPoints) {
     return {
-        labels: dataPoints.map(d => d.date),
+        labels:    dataPoints.map(d => d.date),
         donations: dataPoints.map(d => d.donations),
         dividends: dataPoints.map(d => d.dividends),
         portfolio: dataPoints.map(d => d.portfolio)
@@ -426,15 +465,13 @@ function prepareMonthlyData(dataPoints) {
 function prepareYearlyData(dataPoints) {
     const yearlyData = {};
     dataPoints.forEach(point => {
-        const year = point.year;
-        if (!yearlyData[year] || point.date > yearlyData[year].date) {
-            yearlyData[year] = point;
+        if (!yearlyData[point.year] || point.date > yearlyData[point.year].date) {
+            yearlyData[point.year] = point;
         }
     });
-
     const years = Object.keys(yearlyData).sort();
     return {
-        labels: years,
+        labels:    years,
         donations: years.map(y => yearlyData[y].donations),
         dividends: years.map(y => yearlyData[y].dividends),
         portfolio: years.map(y => yearlyData[y].portfolio)
@@ -443,17 +480,15 @@ function prepareYearlyData(dataPoints) {
 
 function setupChartViewToggle(donations) {
     const monthlyBtn = document.getElementById('viewMonthly');
-    const yearlyBtn = document.getElementById('viewYearly');
-
+    const yearlyBtn  = document.getElementById('viewYearly');
     if (!monthlyBtn || !yearlyBtn) return;
 
-    // Remove old listeners by replacing elements
     const newMonthlyBtn = monthlyBtn.cloneNode(true);
-    const newYearlyBtn = yearlyBtn.cloneNode(true);
+    const newYearlyBtn  = yearlyBtn.cloneNode(true);
     monthlyBtn.parentNode.replaceChild(newMonthlyBtn, monthlyBtn);
     yearlyBtn.parentNode.replaceChild(newYearlyBtn, yearlyBtn);
 
-    newMonthlyBtn.addEventListener('click', function() {
+    newMonthlyBtn.addEventListener('click', function () {
         if (currentChartView === 'monthly') return;
         currentChartView = 'monthly';
         newMonthlyBtn.classList.add('active');
@@ -461,7 +496,7 @@ function setupChartViewToggle(donations) {
         displayChart(donations);
     });
 
-    newYearlyBtn.addEventListener('click', function() {
+    newYearlyBtn.addEventListener('click', function () {
         if (currentChartView === 'yearly') return;
         currentChartView = 'yearly';
         newYearlyBtn.classList.add('active');
@@ -470,23 +505,24 @@ function setupChartViewToggle(donations) {
     });
 }
 
+// ── Causes breakdown ──────────────────────────────────────────────────────
 function displayCausesBreakdown(themes, donations) {
-    const metrics = calculateCompounding(donations);
+    const metrics      = calculateCompounding(donations);
     const annualToCauses = metrics.annualImpact;
-    const perCause = annualToCauses / 3;
+    const perCause     = annualToCauses / 3;
 
     const themeNames = {
-        'basic-needs': 'Basic Needs & Poverty',
-        'health': 'Health & Medicine',
-        'education': 'Education & Knowledge',
-        'environment': 'Environment & Climate',
-        'animals': 'Animals',
-        'children': 'Children & Youth',
-        'human-rights': 'Human Rights & Social Justice',
-        'community': 'Community & Social Services',
-        'culture': 'Culture, Arts & Heritage',
-        'technology': 'Technology & Future Causes',
-        'freedom': 'Freedom of Speech'
+        'basic-needs':   'Basic Needs & Poverty',
+        'health':        'Health & Medicine',
+        'education':     'Education & Knowledge',
+        'environment':   'Environment & Climate',
+        'animals':       'Animals',
+        'children':      'Children & Youth',
+        'human-rights':  'Human Rights & Social Justice',
+        'community':     'Community & Social Services',
+        'culture':       'Culture, Arts & Heritage',
+        'technology':    'Technology & Future Causes',
+        'freedom':       'Freedom of Speech'
     };
 
     const causesList = document.getElementById('causesList');
@@ -504,23 +540,22 @@ function displayCausesBreakdown(themes, donations) {
     });
 }
 
-// Donation history display
+// ── Donation history ──────────────────────────────────────────────────────
 const HISTORY_PREVIEW_COUNT = 8;
 
 function displayDonationHistory(donations) {
     const container = document.getElementById('donationHistoryList');
-    const countEl = document.getElementById('donationCount');
+    const countEl   = document.getElementById('donationCount');
     const toggleBtn = document.getElementById('toggleHistory');
     if (!container) return;
 
     const sorted = [...donations].sort((a, b) => new Date(b.date) - new Date(a.date));
 
-    if (countEl) {
-        countEl.textContent = `${sorted.length} donation${sorted.length !== 1 ? 's' : ''}`;
-    }
+    if (countEl) countEl.textContent = `${sorted.length} donation${sorted.length !== 1 ? 's' : ''}`;
 
     if (sorted.length === 0) {
         container.innerHTML = '<p class="no-donations">No donations yet. Add your first donation below.</p>';
+        if (toggleBtn) toggleBtn.style.display = 'none';
         return;
     }
 
@@ -528,9 +563,9 @@ function displayDonationHistory(donations) {
 
     if (toggleBtn) {
         if (sorted.length > HISTORY_PREVIEW_COUNT) {
-            toggleBtn.style.display = 'block';
-            toggleBtn.dataset.expanded = 'false';
-            toggleBtn.textContent = `Show all ${sorted.length} donations`;
+            toggleBtn.style.display     = 'block';
+            toggleBtn.dataset.expanded  = 'false';
+            toggleBtn.textContent       = `Show all ${sorted.length} donations`;
         } else {
             toggleBtn.style.display = 'none';
         }
@@ -540,17 +575,12 @@ function displayDonationHistory(donations) {
 function renderHistoryItems(container, sorted, limit) {
     const toShow = limit ? sorted.slice(0, limit) : sorted;
     container.innerHTML = '';
-
     toShow.forEach(d => {
-        const item = document.createElement('div');
-        item.className = 'history-item';
-        const date = new Date(d.date);
-        const formatted = date.toLocaleDateString('en-GB', {
-            day: 'numeric',
-            month: 'short',
-            year: 'numeric'
-        });
-        item.innerHTML = `
+        const item      = document.createElement('div');
+        item.className  = 'history-item';
+        const date      = new Date(d.date);
+        const formatted = date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+        item.innerHTML  = `
             <span class="history-date">${formatted}</span>
             <span class="history-amount">€${d.amount.toLocaleString()}</span>
         `;
@@ -562,37 +592,39 @@ function setupHistoryToggle(donations) {
     const toggleBtn = document.getElementById('toggleHistory');
     if (!toggleBtn) return;
 
-    toggleBtn.addEventListener('click', function() {
-        const container = document.getElementById('donationHistoryList');
-        const sorted = [...donations].sort((a, b) => new Date(b.date) - new Date(a.date));
-        const isExpanded = toggleBtn.dataset.expanded === 'true';
+    const newBtn = toggleBtn.cloneNode(true);
+    toggleBtn.parentNode.replaceChild(newBtn, toggleBtn);
+
+    newBtn.addEventListener('click', function () {
+        const container  = document.getElementById('donationHistoryList');
+        const sorted     = [...donations].sort((a, b) => new Date(b.date) - new Date(a.date));
+        const isExpanded = newBtn.dataset.expanded === 'true';
 
         if (isExpanded) {
             renderHistoryItems(container, sorted, HISTORY_PREVIEW_COUNT);
-            toggleBtn.textContent = `Show all ${sorted.length} donations`;
-            toggleBtn.dataset.expanded = 'false';
+            newBtn.textContent      = `Show all ${sorted.length} donations`;
+            newBtn.dataset.expanded = 'false';
         } else {
             renderHistoryItems(container, sorted, null);
-            toggleBtn.textContent = 'Show less';
-            toggleBtn.dataset.expanded = 'true';
+            newBtn.textContent      = 'Show less';
+            newBtn.dataset.expanded = 'true';
         }
     });
 }
 
+// ── Donation form ─────────────────────────────────────────────────────────
 function setupDonationForm() {
-    const form = document.getElementById('donationForm');
+    const form      = document.getElementById('donationForm');
     if (!form) return;
 
     const dateInput = document.getElementById('donationDate');
-    if (dateInput) {
-        dateInput.valueAsDate = new Date();
-    }
+    if (dateInput) dateInput.valueAsDate = new Date();
 
-    form.addEventListener('submit', function(e) {
+    form.addEventListener('submit', function (e) {
         e.preventDefault();
 
         const amount = parseFloat(document.getElementById('donationAmount').value);
-        const date = document.getElementById('donationDate').value;
+        const date   = document.getElementById('donationDate').value;
 
         if (!amount || !date || amount <= 0) {
             showToast('Please enter a valid amount and date', 'error');
@@ -603,18 +635,17 @@ function setupDonationForm() {
         donations.push({ amount, date });
         localStorage.setItem('donations', JSON.stringify(donations));
 
-        // Refresh all displays
-        displayMetrics(donations);
+        const filtered = getFilteredDonations();
+        displayMetrics(filtered);
 
         const chartCanvas = document.getElementById('compoundingChart');
-        const oldChart = Chart.getChart(chartCanvas);
+        const oldChart    = Chart.getChart(chartCanvas);
         if (oldChart) oldChart.destroy();
-        displayChart(donations);
+        displayChart(filtered);
 
-        const userData = JSON.parse(localStorage.getItem('user'));
-        displayCausesBreakdown(userData.themes, donations);
-        displayDonationHistory(donations);
-        setupHistoryToggle(donations);
+        if (_impactUserData) displayCausesBreakdown(_impactUserData.themes, filtered);
+        displayDonationHistory(filtered);
+        setupHistoryToggle(filtered);
 
         form.reset();
         if (dateInput) dateInput.valueAsDate = new Date();
@@ -623,46 +654,45 @@ function setupDonationForm() {
     });
 }
 
+// ── Demo data reset ───────────────────────────────────────────────────────
 function setupResetDemoData() {
     const resetBtn = document.getElementById('resetDemoData');
     if (!resetBtn) return;
 
-    resetBtn.addEventListener('click', function() {
+    resetBtn.addEventListener('click', function () {
         if (confirm('Reset to demo data? This will replace your current donation history with 7.5 years of sample data.')) {
-            const sampleDonations = generateRealisticDonations();
-            localStorage.setItem('donations', JSON.stringify(sampleDonations));
+            localStorage.setItem('donations', JSON.stringify(generateRealisticDonations()));
             location.reload();
         }
     });
 }
 
+// ── Prediction calculator ─────────────────────────────────────────────────
 function setupPredictionCalculator() {
     const calcButton = document.getElementById('calculatePrediction');
     if (!calcButton) return;
 
-    calcButton.addEventListener('click', function() {
+    calcButton.addEventListener('click', function () {
         const newMonthlyInput = document.getElementById('newMonthlyAmount');
-        const yearsInput = document.getElementById('projectionYears');
-
+        const yearsInput      = document.getElementById('projectionYears');
         if (!newMonthlyInput || !yearsInput) return;
 
         const newMonthly = parseFloat(newMonthlyInput.value);
-        const years = parseInt(yearsInput.value);
+        const years      = parseInt(yearsInput.value);
 
         if (!newMonthly || !years || newMonthly <= 0 || years <= 0) {
             showToast('Please enter a valid monthly amount and projection years', 'error');
             return;
         }
 
-        const donations = JSON.parse(localStorage.getItem('donations') || '[]');
-
+        const donations        = JSON.parse(localStorage.getItem('donations') || '[]');
         if (donations.length === 0) {
             showToast('No donation data found. Add donations or reset to demo data first.', 'error');
             return;
         }
 
-        const currentMetrics = calculateCompounding(donations);
-        const currentMonthly = calculateMonthlyAverage(donations);
+        const currentMetrics  = calculateCompounding(donations);
+        const currentMonthly  = calculateMonthlyAverage(donations);
 
         if (currentMonthly === 0) {
             showToast('No donations in the last 12 months to calculate an average from.', 'error');
@@ -670,60 +700,48 @@ function setupPredictionCalculator() {
         }
 
         const currentProjection = projectFuture(currentMetrics.portfolioValue, currentMonthly, years);
-        const newProjection = projectFuture(currentMetrics.portfolioValue, newMonthly, years);
+        const newProjection     = projectFuture(currentMetrics.portfolioValue, newMonthly, years);
 
         displayPredictionChart(currentProjection, newProjection, currentMonthly, newMonthly);
-
         document.getElementById('predictionResults').style.display = 'block';
 
-        const currentFutureValue = currentProjection[currentProjection.length - 1].portfolio;
-        const newFutureValue = newProjection[newProjection.length - 1].portfolio;
+        const currentFutureValue  = currentProjection[currentProjection.length - 1].portfolio;
+        const newFutureValue      = newProjection[newProjection.length - 1].portfolio;
         const currentFutureImpact = currentFutureValue * 0.05 * 0.40;
-        const newFutureImpact = newFutureValue * 0.05 * 0.40;
+        const newFutureImpact     = newFutureValue     * 0.05 * 0.40;
 
-        document.getElementById('currentScenarioValue').textContent =
-            `€${Math.round(currentFutureValue).toLocaleString()}`;
-        document.getElementById('currentScenarioImpact').textContent =
-            `€${Math.round(currentFutureImpact).toLocaleString()}`;
-        document.getElementById('newScenarioValue').textContent =
-            `€${Math.round(newFutureValue).toLocaleString()}`;
-        document.getElementById('newScenarioImpact').textContent =
-            `€${Math.round(newFutureImpact).toLocaleString()}`;
+        document.getElementById('currentScenarioValue').textContent  = `€${Math.round(currentFutureValue).toLocaleString()}`;
+        document.getElementById('currentScenarioImpact').textContent = `€${Math.round(currentFutureImpact).toLocaleString()}`;
+        document.getElementById('newScenarioValue').textContent      = `€${Math.round(newFutureValue).toLocaleString()}`;
+        document.getElementById('newScenarioImpact').textContent     = `€${Math.round(newFutureImpact).toLocaleString()}`;
 
-        const valueDiff = newFutureValue - currentFutureValue;
+        const valueDiff  = newFutureValue  - currentFutureValue;
         const impactDiff = newFutureImpact - currentFutureImpact;
 
-        document.getElementById('valueDifference').textContent =
-            `${valueDiff >= 0 ? '+' : ''}€${Math.round(valueDiff).toLocaleString()}`;
-        document.getElementById('impactDifference').textContent =
-            `${impactDiff >= 0 ? '+' : ''}€${Math.round(impactDiff).toLocaleString()}`;
+        document.getElementById('valueDifference').textContent  = `${valueDiff  >= 0 ? '+' : ''}€${Math.round(valueDiff).toLocaleString()}`;
+        document.getElementById('impactDifference').textContent = `${impactDiff >= 0 ? '+' : ''}€${Math.round(impactDiff).toLocaleString()}`;
 
-        // Scroll to results
         document.getElementById('predictionResults').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
 }
 
 function projectFuture(currentPortfolio, monthlyDonation, years) {
     const ANNUAL_DIVIDEND_RATE = 0.05;
-    const REINVEST_RATE = 0.50;
+    const REINVEST_RATE        = 0.50;
 
-    const dataPoints = [];
+    const dataPoints  = [];
     let portfolioValue = currentPortfolio;
-    const totalMonths = years * 12;
+    const totalMonths  = years * 12;
 
     for (let month = 0; month <= totalMonths; month++) {
         portfolioValue += monthlyDonation;
         const monthlyDividend = portfolioValue * (ANNUAL_DIVIDEND_RATE / 12);
-        portfolioValue += monthlyDividend * REINVEST_RATE;
+        portfolioValue       += monthlyDividend * REINVEST_RATE;
 
         if (month % 3 === 0) {
-            dataPoints.push({
-                month: month,
-                portfolio: Math.round(portfolioValue * 100) / 100
-            });
+            dataPoints.push({ month, portfolio: Math.round(portfolioValue * 100) / 100 });
         }
     }
-
     return dataPoints;
 }
 
@@ -740,48 +758,46 @@ function displayPredictionChart(currentProjection, newProjection, currentMonthly
             labels: currentProjection.map(d => `Month ${d.month}`),
             datasets: [
                 {
-                    label: `Current (€${currentMonthly.toFixed(0)}/mo)`,
-                    data: currentProjection.map(d => d.portfolio),
-                    borderColor: '#A89E8C',
+                    label:           `Current (€${currentMonthly.toFixed(0)}/mo)`,
+                    data:            currentProjection.map(d => d.portfolio),
+                    borderColor:     '#A89E8C',
                     backgroundColor: 'rgba(168, 158, 140, 0.1)',
-                    borderWidth: 2,
-                    borderDash: [5, 5],
-                    tension: 0.4,
-                    fill: false
+                    borderWidth:     2,
+                    borderDash:      [5, 5],
+                    tension:         0.4,
+                    fill:            false
                 },
                 {
-                    label: `New (€${newMonthly}/mo)`,
-                    data: newProjection.map(d => d.portfolio),
-                    borderColor: '#32CD32',
+                    label:           `New (€${newMonthly}/mo)`,
+                    data:            newProjection.map(d => d.portfolio),
+                    borderColor:     '#32CD32',
                     backgroundColor: 'rgba(50, 205, 50, 0.1)',
-                    borderWidth: 3,
-                    tension: 0.4,
-                    fill: false
+                    borderWidth:     3,
+                    tension:         0.4,
+                    fill:            false
                 }
             ]
         },
         options: {
-            responsive: true,
+            responsive:          true,
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    display: true,
+                    display:  true,
                     position: 'top',
                     labels: {
-                        color: '#F5F1E8',
+                        color:         '#F5F1E8',
                         usePointStyle: true,
-                        padding: 15,
+                        padding:       15,
                         font: { size: 12, family: "'IBM Plex Sans', sans-serif" }
                     }
                 },
                 tooltip: {
                     backgroundColor: 'rgba(26, 18, 32, 0.9)',
-                    titleColor: '#F5F1E8',
-                    bodyColor: '#F5F1E8',
+                    titleColor:      '#F5F1E8',
+                    bodyColor:       '#F5F1E8',
                     callbacks: {
-                        label: function(context) {
-                            return context.dataset.label + ': €' + context.parsed.y.toLocaleString();
-                        }
+                        label: ctx => ctx.dataset.label + ': €' + ctx.parsed.y.toLocaleString()
                     }
                 }
             },
@@ -789,18 +805,14 @@ function displayPredictionChart(currentProjection, newProjection, currentMonthly
                 y: {
                     beginAtZero: false,
                     ticks: {
-                        color: '#A89E8C',
-                        callback: function(value) { return '€' + value.toLocaleString(); }
+                        color:    '#A89E8C',
+                        callback: value => '€' + value.toLocaleString()
                     },
                     grid: { color: 'rgba(245, 241, 232, 0.1)' }
                 },
                 x: {
-                    ticks: {
-                        color: '#A89E8C',
-                        maxRotation: 45,
-                        minRotation: 45
-                    },
-                    grid: { color: 'rgba(245, 241, 232, 0.05)' }
+                    ticks: { color: '#A89E8C', maxRotation: 45, minRotation: 45 },
+                    grid:  { color: 'rgba(245, 241, 232, 0.05)' }
                 }
             }
         }
