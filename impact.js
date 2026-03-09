@@ -638,116 +638,160 @@ function setupResetDemoData() {
     });
 }
 
-// ── Prediction calculator ─────────────────────────────────────────────────
+// ── Investment simulator ───────────────────────────────────────────────────
 function setupPredictionCalculator() {
-    const calcButton = document.getElementById('calculatePrediction');
-    if (!calcButton) return;
+    const btn = document.getElementById('runSimulation');
+    if (!btn) return;
 
-    calcButton.addEventListener('click', function () {
-        const newMonthlyInput = document.getElementById('newMonthlyAmount');
-        const yearsInput      = document.getElementById('projectionYears');
-        if (!newMonthlyInput || !yearsInput) return;
+    btn.addEventListener('click', function () {
+        const monthly = parseFloat(document.getElementById('simMonthly')?.value);
+        const years   = parseInt(document.getElementById('simYears')?.value);
 
-        const newMonthly = parseFloat(newMonthlyInput.value);
-        const years      = parseInt(yearsInput.value);
-
-        if (!newMonthly || !years || newMonthly <= 0 || years <= 0) {
-            showToast('Please enter a valid monthly amount and projection years', 'error');
+        if (!monthly || !years || monthly <= 0 || years <= 0) {
+            showToast('Please enter a valid monthly amount and period', 'error');
             return;
         }
 
-        const donations        = JSON.parse(localStorage.getItem('donations_v2') || '[]');
-        if (donations.length === 0) {
-            showToast('No donation data found. Add donations or reset to demo data first.', 'error');
-            return;
+        const { points, crossoverYearIdx, crossoverMonth } = runSimulation(monthly, years);
+        const last = points[points.length - 1];
+
+        document.getElementById('simFinalPortfolio').textContent =
+            `€${Math.round(last.portfolio).toLocaleString()}`;
+        document.getElementById('simMonthlyDividend').textContent =
+            `€${last.monthlyDiv.toFixed(2)}`;
+        document.getElementById('simCausesMonthly').textContent =
+            `€${last.causesAmt.toFixed(2)}`;
+
+        if (crossoverMonth > 0) {
+            const yr  = Math.ceil(crossoverMonth / 12);
+            const mo  = crossoverMonth % 12 || 12;
+            document.getElementById('simCrossover').textContent =
+                `Year ${yr}, Month ${mo}`;
+            document.getElementById('simCrossover').style.color = '#32CD32';
+        } else {
+            document.getElementById('simCrossover').textContent = 'Not reached';
+            document.getElementById('simCrossover').style.color = '#A89E8C';
         }
 
-        const currentMetrics  = calculateCompounding(donations);
-        const currentMonthly  = calculateMonthlyAverage(donations);
-
-        if (currentMonthly === 0) {
-            showToast('No donations in the last 12 months to calculate an average from.', 'error');
-            return;
-        }
-
-        const currentProjection = projectFuture(currentMetrics.portfolioValue, currentMonthly, years);
-        const newProjection     = projectFuture(currentMetrics.portfolioValue, newMonthly, years);
-
-        displayPredictionChart(currentProjection, newProjection, currentMonthly, newMonthly);
-        document.getElementById('predictionResults').style.display = 'block';
-
-        const currentFutureValue  = currentProjection[currentProjection.length - 1].portfolio;
-        const newFutureValue      = newProjection[newProjection.length - 1].portfolio;
-        const currentFutureImpact = currentFutureValue * 0.05 * 0.40;
-        const newFutureImpact     = newFutureValue     * 0.05 * 0.40;
-
-        document.getElementById('currentScenarioValue').textContent  = `€${Math.round(currentFutureValue).toLocaleString()}`;
-        document.getElementById('currentScenarioImpact').textContent = `€${Math.round(currentFutureImpact).toLocaleString()}`;
-        document.getElementById('newScenarioValue').textContent      = `€${Math.round(newFutureValue).toLocaleString()}`;
-        document.getElementById('newScenarioImpact').textContent     = `€${Math.round(newFutureImpact).toLocaleString()}`;
-
-        const valueDiff  = newFutureValue  - currentFutureValue;
-        const impactDiff = newFutureImpact - currentFutureImpact;
-
-        document.getElementById('valueDifference').textContent  = `${valueDiff  >= 0 ? '+' : ''}€${Math.round(valueDiff).toLocaleString()}`;
-        document.getElementById('impactDifference').textContent = `${impactDiff >= 0 ? '+' : ''}€${Math.round(impactDiff).toLocaleString()}`;
-
-        document.getElementById('predictionResults').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        document.getElementById('simResults').style.display = 'block';
+        displayPredictionChart(points, monthly, crossoverYearIdx);
+        document.getElementById('simResults').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
 }
 
-function projectFuture(currentPortfolio, monthlyDonation, years) {
-    const ANNUAL_DIVIDEND_RATE = 0.05;
-    const REINVEST_RATE        = 0.50;
-    const ANNUAL_MARKET_RETURN = 0.09;
+function runSimulation(monthly, years) {
+    const ANNUAL_DIVIDEND  = 0.05;
+    const REINVEST_RATE    = 0.50;
+    const CAUSES_RATE      = 0.40;
+    const ANNUAL_MARKET    = 0.09;
 
-    const dataPoints  = [];
-    let portfolioValue = currentPortfolio;
-    const totalMonths  = years * 12;
+    let portfolioValue = 0;
+    let crossoverMonth = -1;
+    const yearlyPoints = [];
 
-    for (let month = 0; month <= totalMonths; month++) {
-        portfolioValue += monthlyDonation;
-        const monthlyDividend = portfolioValue * (ANNUAL_DIVIDEND_RATE / 12);
-        portfolioValue       += monthlyDividend * REINVEST_RATE;
-        portfolioValue       += portfolioValue * (ANNUAL_MARKET_RETURN / 12);
+    for (let m = 1; m <= years * 12; m++) {
+        portfolioValue      += monthly;
+        const monthlyDiv     = portfolioValue * (ANNUAL_DIVIDEND / 12);
+        portfolioValue      += monthlyDiv * REINVEST_RATE;
+        portfolioValue      += portfolioValue * (ANNUAL_MARKET / 12);
+        const causesAmt      = monthlyDiv * CAUSES_RATE;
 
-        if (month % 3 === 0) {
-            dataPoints.push({ month, portfolio: Math.round(portfolioValue * 100) / 100 });
+        if (crossoverMonth < 0 && causesAmt >= monthly) crossoverMonth = m;
+
+        if (m % 12 === 0) {
+            yearlyPoints.push({
+                year:      m / 12,
+                portfolio: Math.round(portfolioValue * 100) / 100,
+                monthlyDiv: Math.round(monthlyDiv * 100) / 100,
+                causesAmt:  Math.round(causesAmt * 100) / 100
+            });
         }
     }
-    return dataPoints;
+
+    const crossoverYearIdx = crossoverMonth > 0
+        ? Math.min(Math.ceil(crossoverMonth / 12) - 1, yearlyPoints.length - 1)
+        : -1;
+
+    return { points: yearlyPoints, crossoverYearIdx, crossoverMonth };
 }
 
-function displayPredictionChart(currentProjection, newProjection, currentMonthly, newMonthly) {
+function displayPredictionChart(points, monthly, crossoverYearIdx) {
     const ctx = document.getElementById('predictionChart');
     if (!ctx) return;
 
-    const existingChart = Chart.getChart(ctx);
-    if (existingChart) existingChart.destroy();
+    const existing = Chart.getChart(ctx);
+    if (existing) existing.destroy();
+
+    const labels = points.map(p => `Year ${p.year}`);
+
+    // Inline plugin: draws the red dashed vertical line at crossover
+    const crossoverPlugin = {
+        id: 'crossoverLine',
+        afterDraw(chart) {
+            if (crossoverYearIdx < 0) return;
+            const { ctx: c, chartArea, scales } = chart;
+            const x = scales.x.getPixelForTick(crossoverYearIdx);
+            c.save();
+            c.beginPath();
+            c.moveTo(x, chartArea.top);
+            c.lineTo(x, chartArea.bottom);
+            c.strokeStyle = 'rgba(255, 80, 80, 0.85)';
+            c.lineWidth   = 2;
+            c.setLineDash([6, 4]);
+            c.stroke();
+            c.fillStyle  = 'rgba(255, 80, 80, 0.9)';
+            c.font       = `11px 'IBM Plex Sans', sans-serif`;
+            c.textAlign  = 'left';
+            c.fillText('Crossover', x + 6, chartArea.top + 16);
+            c.restore();
+        }
+    };
 
     new Chart(ctx, {
         type: 'line',
         data: {
-            labels: currentProjection.map(d => `Month ${d.month}`),
+            labels,
             datasets: [
                 {
-                    label:           `Current (€${currentMonthly.toFixed(0)}/mo)`,
-                    data:            currentProjection.map(d => d.portfolio),
-                    borderColor:     '#A89E8C',
-                    backgroundColor: 'rgba(168, 158, 140, 0.1)',
-                    borderWidth:     2,
-                    borderDash:      [5, 5],
-                    tension:         0.4,
-                    fill:            false
-                },
-                {
-                    label:           `New (€${newMonthly}/mo)`,
-                    data:            newProjection.map(d => d.portfolio),
-                    borderColor:     '#32CD32',
-                    backgroundColor: 'rgba(50, 205, 50, 0.1)',
+                    label:           'Portfolio Value',
+                    data:            points.map(p => p.portfolio),
+                    borderColor:     '#228B22',
+                    backgroundColor: 'rgba(34, 139, 34, 0.08)',
                     borderWidth:     3,
                     tension:         0.4,
-                    fill:            false
+                    fill:            false,
+                    yAxisID:         'y'
+                },
+                {
+                    label:           'Monthly Dividend Income',
+                    data:            points.map(p => p.monthlyDiv),
+                    borderColor:     '#4169E1',
+                    backgroundColor: 'rgba(65, 105, 225, 0.05)',
+                    borderWidth:     2,
+                    tension:         0.4,
+                    fill:            false,
+                    yAxisID:         'y2'
+                },
+                {
+                    label:           '40% of Dividend (to Causes)',
+                    data:            points.map(p => p.causesAmt),
+                    borderColor:     '#9370DB',
+                    backgroundColor: 'rgba(147, 112, 219, 0.05)',
+                    borderWidth:     2,
+                    tension:         0.4,
+                    fill:            false,
+                    yAxisID:         'y2'
+                },
+                {
+                    label:       `Monthly Investment (€${monthly})`,
+                    data:        points.map(() => monthly),
+                    borderColor: 'rgba(255, 215, 0, 0.85)',
+                    borderWidth: 2,
+                    borderDash:  [8, 4],
+                    tension:     0,
+                    fill:        false,
+                    pointRadius: 0,
+                    yAxisID:     'y2'
                 }
             ]
         },
@@ -763,31 +807,57 @@ function displayPredictionChart(currentProjection, newProjection, currentMonthly
                         usePointStyle: true,
                         padding:       15,
                         font: { size: 12, family: "'IBM Plex Sans', sans-serif" }
+                    },
+                    onClick: function (e, legendItem, legend) {
+                        const meta = legend.chart.getDatasetMeta(legendItem.datasetIndex);
+                        meta.hidden = !meta.hidden;
+                        legend.chart.update();
                     }
                 },
                 tooltip: {
+                    mode:            'index',
+                    intersect:       false,
                     backgroundColor: 'rgba(26, 18, 32, 0.9)',
                     titleColor:      '#F5F1E8',
                     bodyColor:       '#F5F1E8',
+                    borderColor:     'rgba(245, 241, 232, 0.2)',
+                    borderWidth:     1,
+                    padding:         12,
                     callbacks: {
-                        label: ctx => ctx.dataset.label + ': €' + ctx.parsed.y.toLocaleString()
+                        label: ctx => {
+                            const v = ctx.parsed.y;
+                            return ctx.dataset.yAxisID === 'y'
+                                ? ctx.dataset.label + ': €' + Math.round(v).toLocaleString()
+                                : ctx.dataset.label + ': €' + v.toFixed(2);
+                        }
                     }
                 }
             },
             scales: {
                 y: {
-                    beginAtZero: false,
-                    ticks: {
-                        color:    '#A89E8C',
-                        callback: value => '€' + value.toLocaleString()
-                    },
-                    grid: { color: 'rgba(245, 241, 232, 0.1)' }
+                    position:    'left',
+                    beginAtZero: true,
+                    ticks: { color: '#A89E8C', callback: v => '€' + v.toLocaleString() },
+                    grid:  { color: 'rgba(245, 241, 232, 0.1)' }
+                },
+                y2: {
+                    position:    'right',
+                    beginAtZero: true,
+                    ticks: { color: '#A89E8C', callback: v => '€' + v.toFixed(0) },
+                    grid:  { drawOnChartArea: false },
+                    title: {
+                        display: true,
+                        text:    'Monthly (€)',
+                        color:   '#A89E8C',
+                        font:    { size: 11, family: "'IBM Plex Sans', sans-serif" }
+                    }
                 },
                 x: {
-                    ticks: { color: '#A89E8C', maxRotation: 45, minRotation: 45 },
+                    ticks: { color: '#A89E8C' },
                     grid:  { color: 'rgba(245, 241, 232, 0.05)' }
                 }
             }
-        }
+        },
+        plugins: [crossoverPlugin]
     });
 }
