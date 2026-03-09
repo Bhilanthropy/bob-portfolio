@@ -1,349 +1,411 @@
-// Generate realistic 7.5 years of donation data
+// ── Date filter state ──────────────────────────────────────────────────────
+let _impactFilterRange = 'all';
+let _impactFilterFrom  = null;
+let _impactFilterTo    = null;
+let _impactUserData    = null;
+
+function getFilteredDonations() {
+    const all = JSON.parse(localStorage.getItem('donations') || '[]');
+    if (_impactFilterRange === 'all') return all;
+
+    const today = new Date();
+
+    if (_impactFilterRange === 'custom') {
+        const from = _impactFilterFrom ? new Date(_impactFilterFrom) : null;
+        const to   = _impactFilterTo   ? new Date(_impactFilterTo)   : today;
+        return all.filter(d => {
+            const date = new Date(d.date);
+            return (!from || date >= from) && date <= to;
+        });
+    }
+
+    const from = new Date(today);
+    if (_impactFilterRange === '1y') from.setFullYear(from.getFullYear() - 1);
+    if (_impactFilterRange === '3y') from.setFullYear(from.getFullYear() - 3);
+    return all.filter(d => new Date(d.date) >= from);
+}
+
+function refreshImpactDisplays() {
+    const donations = getFilteredDonations();
+    displayMetrics(donations);
+    displayChart(donations);
+    if (_impactUserData) displayCausesBreakdown(_impactUserData.themes, donations);
+    displayDonationHistory(donations);
+    setupHistoryToggle(donations);
+}
+
+function setupDateFilter() {
+    const presets     = document.querySelectorAll('.filter-preset');
+    const customPanel = document.getElementById('filterCustom');
+    const applyBtn    = document.getElementById('applyFilter');
+
+    if (!presets.length) return;
+
+    presets.forEach(btn => {
+        btn.addEventListener('click', function () {
+            presets.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            _impactFilterRange = this.dataset.range;
+
+            if (customPanel) {
+                customPanel.classList.toggle('filter-custom-visible', _impactFilterRange === 'custom');
+            }
+
+            if (_impactFilterRange !== 'custom') {
+                refreshImpactDisplays();
+            }
+        });
+    });
+
+    if (applyBtn) {
+        applyBtn.addEventListener('click', function () {
+            _impactFilterFrom = document.getElementById('filterFrom')?.value || null;
+            _impactFilterTo   = document.getElementById('filterTo')?.value   || null;
+            refreshImpactDisplays();
+        });
+    }
+}
+
+// ── Public entry point (called by dashboard.js) ───────────────────────────
+window.initImpactDashboard = function (userData) {
+    _impactUserData = userData;
+
+    if (!localStorage.getItem('donations')) {
+        localStorage.setItem('donations', JSON.stringify(generateRealisticDonations()));
+    }
+
+    const donations = getFilteredDonations();
+
+    displayMetrics(donations);
+    displayChart(donations);
+    displayAllocationChart();
+    displayCausesBreakdown(userData.themes, donations);
+    displayDonationHistory(donations);
+    setupResetDemoData();
+    setupDonationForm();
+    setupPredictionCalculator();
+    setupHistoryToggle(donations);
+    setupDateFilter();
+};
+
+// ── Demo data generator ───────────────────────────────────────────────────
 function generateRealisticDonations() {
     const donations = [];
     const startDate = new Date();
     startDate.setFullYear(startDate.getFullYear() - 7);
-    startDate.setMonth(startDate.getMonth() - 6); // 7.5 years ago
-    
+    startDate.setMonth(startDate.getMonth() - 6);
+
     const monthlyAmounts = [
-        15, 15, 20, 15, 15, 10, 15, 20, 15, 15, 15, 20,  // Year 1
-        15, 15, 25, 30, 35, 35, 30, 25, 20, 15, 15, 15,  // Year 2 (peak period)
-        15, 15, 10, 10, 15, 15, 20, 15, 15, 15, 20, 25,  // Year 3
-        15, 15, 15, 20, 25, 30, 35, 30, 25, 20, 15, 15,  // Year 4 (another peak)
-        10, 10, 15, 15, 15, 20, 15, 15, 10, 10, 15, 15,  // Year 5 (lower period)
-        15, 15, 20, 25, 30, 30, 25, 20, 15, 15, 15, 20,  // Year 6
-        15, 15, 15, 20, 15, 15, 15, 20, 25, 30, 20, 15,  // Year 7
-        15, 15, 20, 15, 15, 10                            // Year 7.5 (6 months)
+        15, 15, 20, 15, 15, 10, 15, 20, 15, 15, 15, 20,
+        15, 15, 25, 30, 35, 35, 30, 25, 20, 15, 15, 15,
+        15, 15, 10, 10, 15, 15, 20, 15, 15, 15, 20, 25,
+        15, 15, 15, 20, 25, 30, 35, 30, 25, 20, 15, 15,
+        10, 10, 15, 15, 15, 20, 15, 15, 10, 10, 15, 15,
+        15, 15, 20, 25, 30, 30, 25, 20, 15, 15, 15, 20,
+        15, 15, 15, 20, 15, 15, 15, 20, 25, 30, 20, 15,
+        15, 15, 20, 15, 15, 10
     ];
-    
-    // Add monthly donations
+
     for (let i = 0; i < monthlyAmounts.length; i++) {
         const donationDate = new Date(startDate);
         donationDate.setMonth(donationDate.getMonth() + i);
-        donations.push({
-            amount: monthlyAmounts[i],
-            date: donationDate.toISOString().split('T')[0]
-        });
+        donations.push({ amount: monthlyAmounts[i], date: donationDate.toISOString().split('T')[0] });
     }
-    
-    // Add 4 one-time larger donations at random points
+
     const largerDonations = [
-        { amount: 150, monthOffset: 18 },  // ~1.5 years in
-        { amount: 300, monthOffset: 36 },  // ~3 years in
-        { amount: 450, monthOffset: 60 },  // ~5 years in
-        { amount: 200, monthOffset: 80 }   // ~6.7 years in
+        { amount: 150, monthOffset: 18 },
+        { amount: 300, monthOffset: 36 },
+        { amount: 450, monthOffset: 60 },
+        { amount: 200, monthOffset: 80 }
     ];
-    
+
     largerDonations.forEach(large => {
         const donationDate = new Date(startDate);
         donationDate.setMonth(donationDate.getMonth() + large.monthOffset);
-        donationDate.setDate(15); // Mid-month
-        donations.push({
-            amount: large.amount,
-            date: donationDate.toISOString().split('T')[0]
-        });
+        donationDate.setDate(15);
+        donations.push({ amount: large.amount, date: donationDate.toISOString().split('T')[0] });
     });
-    
-    // Sort by date
+
     donations.sort((a, b) => new Date(a.date) - new Date(b.date));
-    
     return donations;
 }
 
-// Impact Dashboard Logic
-document.addEventListener('DOMContentLoaded', function() {
-    // Check authentication
-    const isLoggedIn = localStorage.getItem('isLoggedIn');
-    if (!isLoggedIn) {
-        window.location.href = 'index.html';
-        return;
-    }
-    
-    const userData = JSON.parse(localStorage.getItem('user'));
-    
-    // Initialize donations if not exists
-    if (!localStorage.getItem('donations')) {
-        // Create realistic 7.5 years of donation data
-        const sampleDonations = generateRealisticDonations();
-        localStorage.setItem('donations', JSON.stringify(sampleDonations));
-    }
-    
-    const donations = JSON.parse(localStorage.getItem('donations'));
-    
-    // Calculate metrics and display
-    displayMetrics(donations);
-    displayChart(donations);
-    displayCausesBreakdown(userData.themes, donations);
-    
-    // Setup reset demo data button
-    setupResetDemoData();
-    
-    // Setup donation form
-    setupDonationForm();
-    
-    // Setup future prediction calculator
-    setupPredictionCalculator();
-    
-    // Setup logout
-    document.getElementById('logoutBtn')?.addEventListener('click', function(e) {
-        e.preventDefault();
-        localStorage.removeItem('isLoggedIn');
-        window.location.href = 'index.html';
-    });
-});
+// ── Toast ─────────────────────────────────────────────────────────────────
+function showToast(message, type = 'success') {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
 
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    container.appendChild(toast);
+
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => toast.classList.add('toast-visible'));
+    });
+
+    setTimeout(() => {
+        toast.classList.remove('toast-visible');
+        setTimeout(() => toast.remove(), 350);
+    }, 3000);
+}
+
+// ── Core calculation ──────────────────────────────────────────────────────
 function calculateCompounding(donations) {
-    const ANNUAL_DIVIDEND_RATE = 0.05; // 5% annual dividend
-    const REINVEST_RATE = 0.50; // 50% reinvested
-    const CAUSES_RATE = 0.40; // 40% to causes
-    const MAINTENANCE_RATE = 0.10; // 10% maintenance
-    
-    // Sort donations by date
-    const sortedDonations = [...donations].sort((a, b) => 
-        new Date(a.date) - new Date(b.date)
-    );
-    
+    const ANNUAL_DIVIDEND_RATE = 0.05;
+    const REINVEST_RATE        = 0.50;
+    const CAUSES_RATE          = 0.40;
+
+    const sortedDonations = [...donations].sort((a, b) => new Date(a.date) - new Date(b.date));
+
     if (sortedDonations.length === 0) {
         return { dataPoints: [], totalDonated: 0, portfolioValue: 0, annualImpact: 0, totalDividends: 0 };
     }
-    
+
     const startDate = new Date(sortedDonations[0].date);
-    const today = new Date();
-    
-    // Generate monthly data points
-    const dataPoints = [];
-    let portfolioValue = 0;
-    let cumulativeDonations = 0;
-    let cumulativeDividends = 0;
-    let currentDate = new Date(startDate);
-    let donationIndex = 0;
-    
+    const today     = new Date();
+
+    const dataPoints          = [];
+    let portfolioValue        = 0;
+    let cumulativeDonations   = 0;
+    let cumulativeDividends   = 0;
+    let currentDate           = new Date(startDate);
+    let donationIndex         = 0;
+
     while (currentDate <= today) {
         const monthStr = currentDate.toISOString().slice(0, 7);
-        const yearStr = currentDate.getFullYear().toString();
-        
-        // Add any donations for this month
+        const yearStr  = currentDate.getFullYear().toString();
+
         while (donationIndex < sortedDonations.length) {
             const donationDate = new Date(sortedDonations[donationIndex].date);
             if (donationDate.getFullYear() === currentDate.getFullYear() &&
-                donationDate.getMonth() === currentDate.getMonth()) {
+                donationDate.getMonth()    === currentDate.getMonth()) {
                 const amount = sortedDonations[donationIndex].amount;
-                portfolioValue += amount;
+                portfolioValue      += amount;
                 cumulativeDonations += amount;
                 donationIndex++;
             } else {
                 break;
             }
         }
-        
-        // Calculate monthly dividend and reinvestment
+
         const monthlyDividend = portfolioValue * (ANNUAL_DIVIDEND_RATE / 12);
-        const reinvestAmount = monthlyDividend * REINVEST_RATE;
-        portfolioValue += reinvestAmount;
-        cumulativeDividends += monthlyDividend;
-        
+        const reinvestAmount  = monthlyDividend * REINVEST_RATE;
+        portfolioValue        += reinvestAmount;
+        cumulativeDividends   += monthlyDividend;
+
         dataPoints.push({
-            date: monthStr,
-            year: yearStr,
+            date:      monthStr,
+            year:      yearStr,
             donations: Math.round(cumulativeDonations * 100) / 100,
             dividends: Math.round(cumulativeDividends * 100) / 100,
-            portfolio: Math.round(portfolioValue * 100) / 100
+            portfolio: Math.round(portfolioValue * 100)      / 100
         });
-        
-        // Move to next month
+
         currentDate.setMonth(currentDate.getMonth() + 1);
     }
-    
-    // Calculate annual impact (40% of annual dividends)
+
     const annualDividend = portfolioValue * ANNUAL_DIVIDEND_RATE;
-    const annualImpact = annualDividend * CAUSES_RATE;
-    
+    const annualImpact   = annualDividend * CAUSES_RATE;
+
     return {
         dataPoints,
-        totalDonated: cumulativeDonations,
+        totalDonated:   cumulativeDonations,
         portfolioValue: Math.round(portfolioValue * 100) / 100,
-        annualImpact: Math.round(annualImpact * 100) / 100,
+        annualImpact:   Math.round(annualImpact   * 100) / 100,
         totalDividends: Math.round(cumulativeDividends * 100) / 100
     };
 }
 
+// ── Metrics display ───────────────────────────────────────────────────────
 function displayMetrics(donations) {
     const metrics = calculateCompounding(donations);
-    
-    // Update metrics display with euros
-    document.getElementById('totalDonated').textContent = 
-        `€${metrics.totalDonated.toLocaleString()}`;
-    
-    document.getElementById('portfolioValue').textContent = 
-        `€${metrics.portfolioValue.toLocaleString()}`;
-    
-    const growthPercent = metrics.totalDonated > 0 
+
+    document.getElementById('totalDonated').textContent   = `€${metrics.totalDonated.toLocaleString()}`;
+    document.getElementById('portfolioValue').textContent = `€${metrics.portfolioValue.toLocaleString()}`;
+
+    const growthPercent = metrics.totalDonated > 0
         ? ((metrics.portfolioValue - metrics.totalDonated) / metrics.totalDonated * 100).toFixed(1)
         : 0;
-    document.getElementById('portfolioGrowth').textContent = 
-        `+${growthPercent}% growth`;
-    
-    document.getElementById('annualImpact').textContent = 
-        `€${metrics.annualImpact.toLocaleString()}`;
-    
-    // Calculate and display monthly average
-    const monthlyAvg = calculateMonthlyAverage(donations);
+    document.getElementById('portfolioGrowth').textContent = `+${growthPercent}% growth`;
+    document.getElementById('annualImpact').textContent    = `€${metrics.annualImpact.toLocaleString()}`;
+
+    const monthlyAvg     = calculateMonthlyAverage(donations);
     const monthlyElement = document.getElementById('monthlyDonations');
-    if (monthlyElement) {
-        monthlyElement.textContent = `€${monthlyAvg.toFixed(0)}`;
+    if (monthlyElement) monthlyElement.textContent = `€${monthlyAvg.toFixed(0)}`;
+
+    const years          = getYearsSinceFirstDonation(donations);
+    const yearsGivingEl  = document.getElementById('yearsGiving');
+    const yearsGivingBadge = document.getElementById('yearsGivingBadge');
+    if (yearsGivingEl && years > 0) {
+        const yearsLabel = years >= 1
+            ? `${Math.floor(years)} year${Math.floor(years) !== 1 ? 's' : ''}`
+            : `${Math.round(years * 12)} months`;
+        yearsGivingEl.textContent = yearsLabel;
+        if (yearsGivingBadge) yearsGivingBadge.style.display = 'inline';
     }
-    
-    // Check milestone: portfolio generates more than average annual donation
+
     const avgAnnualDonation = metrics.totalDonated / Math.max(1, getYearsSinceFirstDonation(donations));
-    if (metrics.annualImpact > avgAnnualDonation && metrics.dataPoints.length > 12) {
-        document.getElementById('milestoneAlert').style.display = 'flex';
+    const milestoneEl = document.getElementById('milestoneAlert');
+    if (milestoneEl) {
+        milestoneEl.style.display =
+            (metrics.annualImpact > avgAnnualDonation && metrics.dataPoints.length > 12) ? 'flex' : 'none';
     }
-    
-    // Display cumulative spending
+
     displayCumulativeSpending(metrics);
 }
 
 function calculateMonthlyAverage(donations) {
     if (donations.length === 0) return 0;
-    
-    // Get donations from last 12 months
-    const today = new Date();
+    const today          = new Date();
     const twelveMonthsAgo = new Date(today);
     twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
-    
-    const recentDonations = donations.filter(d => 
-        new Date(d.date) >= twelveMonthsAgo
-    );
-    
-    if (recentDonations.length === 0) return 0;
-    
-    const total = recentDonations.reduce((sum, d) => sum + d.amount, 0);
-    return total / 12; // Average per month
+    const recent = donations.filter(d => new Date(d.date) >= twelveMonthsAgo);
+    if (recent.length === 0) return 0;
+    return recent.reduce((sum, d) => sum + d.amount, 0) / 12;
 }
 
 function displayCumulativeSpending(metrics) {
-    // Calculate cumulative dividends distributed
     const totalDividendsPaid = metrics.portfolioValue - metrics.totalDonated;
-    
-    // Split according to allocation
-    const totalReinvested = totalDividendsPaid * 0.50;
-    const totalToCauses = totalDividendsPaid * 0.40;
-    const totalMaintenance = totalDividendsPaid * 0.10;
-    
-    // Update display
-    const reinvestedEl = document.getElementById('totalReinvested');
-    const causesEl = document.getElementById('totalCauses');
+    const totalReinvested    = totalDividendsPaid * 0.50;
+    const totalToCauses      = totalDividendsPaid * 0.40;
+    const totalMaintenance   = totalDividendsPaid * 0.10;
+
+    const reinvestedEl  = document.getElementById('totalReinvested');
+    const causesEl      = document.getElementById('totalCauses');
     const maintenanceEl = document.getElementById('totalMaintenance');
-    
-    if (reinvestedEl) reinvestedEl.textContent = `€${Math.round(totalReinvested).toLocaleString()}`;
-    if (causesEl) causesEl.textContent = `€${Math.round(totalToCauses).toLocaleString()}`;
+
+    if (reinvestedEl)  reinvestedEl.textContent  = `€${Math.round(totalReinvested).toLocaleString()}`;
+    if (causesEl)      causesEl.textContent      = `€${Math.round(totalToCauses).toLocaleString()}`;
     if (maintenanceEl) maintenanceEl.textContent = `€${Math.round(totalMaintenance).toLocaleString()}`;
 }
 
 function getYearsSinceFirstDonation(donations) {
     if (donations.length === 0) return 1;
-    const firstDate = new Date(donations.sort((a, b) => 
-        new Date(a.date) - new Date(b.date))[0].date);
-    const today = new Date();
-    return Math.max(1, (today - firstDate) / (365.25 * 24 * 60 * 60 * 1000));
+    const sorted    = [...donations].sort((a, b) => new Date(a.date) - new Date(b.date));
+    const firstDate = new Date(sorted[0].date);
+    return Math.max(0, (new Date() - firstDate) / (365.25 * 24 * 60 * 60 * 1000));
 }
 
-let currentChartView = 'monthly'; // Track current view
-let currentChartInstance = null; // Track chart instance
+// ── Donut chart ───────────────────────────────────────────────────────────
+let allocationChartInstance = null;
+
+function displayAllocationChart() {
+    const ctx = document.getElementById('allocationChart');
+    if (!ctx) return;
+
+    if (allocationChartInstance) allocationChartInstance.destroy();
+
+    allocationChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Reinvested (50%)', 'Your Causes (40%)', 'Maintenance (10%)'],
+            datasets: [{
+                data:            [50, 40, 10],
+                backgroundColor: ['#32CD32', '#E89C5C', '#696969'],
+                borderColor:     'rgba(26, 18, 32, 0.8)',
+                borderWidth:     2,
+                hoverOffset:     8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            cutout: '62%',
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(26, 18, 32, 0.9)',
+                    titleColor: '#F5F1E8',
+                    bodyColor:  '#F5F1E8',
+                    borderColor: 'rgba(245, 241, 232, 0.2)',
+                    borderWidth: 1,
+                    callbacks: { label: ctx => ' ' + ctx.label }
+                }
+            }
+        }
+    });
+}
+
+// ── Line chart ────────────────────────────────────────────────────────────
+let currentChartView     = 'monthly';
+let currentChartInstance = null;
 
 function displayChart(donations) {
     const metrics = calculateCompounding(donations);
-    const ctx = document.getElementById('compoundingChart');
-    
+    const ctx     = document.getElementById('compoundingChart');
     if (!ctx) return;
-    
-    // Destroy existing chart if exists
-    if (currentChartInstance) {
-        currentChartInstance.destroy();
-    }
-    
-    // Get data based on current view
-    const chartData = currentChartView === 'monthly' 
+
+    if (currentChartInstance) currentChartInstance.destroy();
+
+    const chartData = currentChartView === 'monthly'
         ? prepareMonthlyData(metrics.dataPoints)
         : prepareYearlyData(metrics.dataPoints);
-    
-    // Create chart with 3 datasets
+
     currentChartInstance = new Chart(ctx, {
         type: 'line',
         data: {
             labels: chartData.labels,
             datasets: [
                 {
-                    label: 'Cumulative Donations',
-                    data: chartData.donations,
-                    borderColor: '#E89C5C',
-                    backgroundColor: 'rgba(232, 166, 93, 0.1)',
-                    borderWidth: 3,
-                    tension: 0.4,
-                    fill: false,
-                    hidden: false
+                    label:           'Cumulative Donations',
+                    data:            chartData.donations,
+                    borderColor:     '#E89C5C',
+                    backgroundColor: 'rgba(232, 156, 92, 0.1)',
+                    borderWidth:     3,
+                    tension:         0.4,
+                    fill:            false
                 },
                 {
-                    label: 'Cumulative Dividends',
-                    data: chartData.dividends,
-                    borderColor: '#4169E1',
+                    label:           'Cumulative Dividends',
+                    data:            chartData.dividends,
+                    borderColor:     '#4169E1',
                     backgroundColor: 'rgba(65, 105, 225, 0.1)',
-                    borderWidth: 3,
-                    tension: 0.4,
-                    fill: false,
-                    hidden: false
+                    borderWidth:     3,
+                    tension:         0.4,
+                    fill:            false
                 },
                 {
-                    label: 'Portfolio Value',
-                    data: chartData.portfolio,
-                    borderColor: '#228B22',
+                    label:           'Portfolio Value',
+                    data:            chartData.portfolio,
+                    borderColor:     '#228B22',
                     backgroundColor: 'rgba(34, 139, 34, 0.1)',
-                    borderWidth: 3,
-                    tension: 0.4,
-                    fill: false,
-                    hidden: false
+                    borderWidth:     3,
+                    tension:         0.4,
+                    fill:            false
                 }
             ]
         },
         options: {
-            responsive: true,
+            responsive:          true,
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    display: true,
+                    display:  true,
                     position: 'top',
                     labels: {
-                        color: '#F5F1E8',
-                        usePointStyle: true,
-                        padding: 15,
-                        font: {
-                            size: 12,
-                            family: "'IBM Plex Sans', sans-serif"
-                        }
+                        color:          '#F5F1E8',
+                        usePointStyle:  true,
+                        padding:        15,
+                        font: { size: 12, family: "'IBM Plex Sans', sans-serif" }
                     },
-                    onClick: function(e, legendItem, legend) {
-                        const index = legendItem.datasetIndex;
-                        const chart = legend.chart;
-                        const meta = chart.getDatasetMeta(index);
+                    onClick: function (e, legendItem, legend) {
+                        const meta = legend.chart.getDatasetMeta(legendItem.datasetIndex);
                         meta.hidden = !meta.hidden;
-                        chart.update();
+                        legend.chart.update();
                     }
                 },
                 tooltip: {
-                    mode: 'index',
-                    intersect: false,
-                    backgroundColor: 'rgba(26, 22, 37, 0.9)',
-                    titleColor: '#F5F1E8',
-                    bodyColor: '#F5F1E8',
-                    borderColor: 'rgba(245, 241, 232, 0.2)',
-                    borderWidth: 1,
-                    padding: 12,
-                    displayColors: true,
+                    mode:            'index',
+                    intersect:       false,
+                    backgroundColor: 'rgba(26, 18, 32, 0.9)',
+                    titleColor:      '#F5F1E8',
+                    bodyColor:       '#F5F1E8',
+                    borderColor:     'rgba(245, 241, 232, 0.2)',
+                    borderWidth:     1,
+                    padding:         12,
                     callbacks: {
-                        label: function(context) {
-                            return context.dataset.label + ': €' + 
-                                context.parsed.y.toLocaleString();
-                        }
+                        label: ctx => ctx.dataset.label + ': €' + ctx.parsed.y.toLocaleString()
                     }
                 }
             },
@@ -351,41 +413,26 @@ function displayChart(donations) {
                 y: {
                     beginAtZero: true,
                     ticks: {
-                        color: '#A89E8C',
-                        callback: function(value) {
-                            return '€' + value.toLocaleString();
-                        }
+                        color:    '#A89E8C',
+                        callback: value => '€' + value.toLocaleString()
                     },
-                    grid: {
-                        color: 'rgba(245, 241, 232, 0.1)'
-                    }
+                    grid: { color: 'rgba(245, 241, 232, 0.1)' }
                 },
                 x: {
-                    ticks: {
-                        color: '#A89E8C',
-                        maxRotation: 45,
-                        minRotation: 45
-                    },
-                    grid: {
-                        color: 'rgba(245, 241, 232, 0.05)'
-                    }
+                    ticks: { color: '#A89E8C', maxRotation: 45, minRotation: 45 },
+                    grid:  { color: 'rgba(245, 241, 232, 0.05)' }
                 }
             },
-            interaction: {
-                mode: 'nearest',
-                axis: 'x',
-                intersect: false
-            }
+            interaction: { mode: 'nearest', axis: 'x', intersect: false }
         }
     });
-    
-    // Setup view toggle buttons
+
     setupChartViewToggle(donations);
 }
 
 function prepareMonthlyData(dataPoints) {
     return {
-        labels: dataPoints.map(d => d.date),
+        labels:    dataPoints.map(d => d.date),
         donations: dataPoints.map(d => d.donations),
         dividends: dataPoints.map(d => d.dividends),
         portfolio: dataPoints.map(d => d.portfolio)
@@ -394,19 +441,14 @@ function prepareMonthlyData(dataPoints) {
 
 function prepareYearlyData(dataPoints) {
     const yearlyData = {};
-    
-    // Aggregate by year (take last month of each year)
     dataPoints.forEach(point => {
-        const year = point.year;
-        if (!yearlyData[year] || point.date > yearlyData[year].date) {
-            yearlyData[year] = point;
+        if (!yearlyData[point.year] || point.date > yearlyData[point.year].date) {
+            yearlyData[point.year] = point;
         }
     });
-    
     const years = Object.keys(yearlyData).sort();
-    
     return {
-        labels: years,
+        labels:    years,
         donations: years.map(y => yearlyData[y].donations),
         dividends: years.map(y => yearlyData[y].dividends),
         portfolio: years.map(y => yearlyData[y].portfolio)
@@ -415,311 +457,324 @@ function prepareYearlyData(dataPoints) {
 
 function setupChartViewToggle(donations) {
     const monthlyBtn = document.getElementById('viewMonthly');
-    const yearlyBtn = document.getElementById('viewYearly');
-    
+    const yearlyBtn  = document.getElementById('viewYearly');
     if (!monthlyBtn || !yearlyBtn) return;
-    
-    monthlyBtn.addEventListener('click', function() {
+
+    const newMonthlyBtn = monthlyBtn.cloneNode(true);
+    const newYearlyBtn  = yearlyBtn.cloneNode(true);
+    monthlyBtn.parentNode.replaceChild(newMonthlyBtn, monthlyBtn);
+    yearlyBtn.parentNode.replaceChild(newYearlyBtn, yearlyBtn);
+
+    newMonthlyBtn.addEventListener('click', function () {
         if (currentChartView === 'monthly') return;
         currentChartView = 'monthly';
-        monthlyBtn.classList.add('active');
-        yearlyBtn.classList.remove('active');
+        newMonthlyBtn.classList.add('active');
+        newYearlyBtn.classList.remove('active');
         displayChart(donations);
     });
-    
-    yearlyBtn.addEventListener('click', function() {
+
+    newYearlyBtn.addEventListener('click', function () {
         if (currentChartView === 'yearly') return;
         currentChartView = 'yearly';
-        yearlyBtn.classList.add('active');
-        monthlyBtn.classList.remove('active');
+        newYearlyBtn.classList.add('active');
+        newMonthlyBtn.classList.remove('active');
         displayChart(donations);
     });
 }
-}
 
+// ── Causes breakdown ──────────────────────────────────────────────────────
 function displayCausesBreakdown(themes, donations) {
-    const metrics = calculateCompounding(donations);
-    const annualToCauses = metrics.annualImpact; // This is already 40% of dividends
-    
-    // Split equally among 3 themes
-    const perCause = annualToCauses / 3;
-    
+    const metrics      = calculateCompounding(donations);
+    const annualToCauses = metrics.annualImpact;
+    const perCause     = annualToCauses / 3;
+
     const themeNames = {
-        'basic-needs': 'Basic Needs & Poverty',
-        'health': 'Health & Medicine',
-        'education': 'Education & Knowledge',
-        'environment': 'Environment & Climate',
-        'animals': 'Animals',
-        'children': 'Children & Youth',
-        'human-rights': 'Human Rights & Social Justice',
-        'community': 'Community & Social Services',
-        'culture': 'Culture, Arts & Heritage',
-        'technology': 'Technology & Future Causes',
-        'freedom': 'Freedom of Speech'
+        'basic-needs':   'Basic Needs & Poverty',
+        'health':        'Health & Medicine',
+        'education':     'Education & Knowledge',
+        'environment':   'Environment & Climate',
+        'animals':       'Animals',
+        'children':      'Children & Youth',
+        'human-rights':  'Human Rights & Social Justice',
+        'community':     'Community & Social Services',
+        'culture':       'Culture, Arts & Heritage',
+        'technology':    'Technology & Future Causes',
+        'freedom':       'Freedom of Speech'
     };
-    
+
     const causesList = document.getElementById('causesList');
     if (!causesList) return;
-    
+
     causesList.innerHTML = '';
-    
     themes.forEach(theme => {
         const div = document.createElement('div');
         div.className = 'cause-item';
         div.innerHTML = `
-            <span class="cause-name">${themeNames[theme]}</span>
-            <span class="cause-amount">€${Math.round(perCause).toLocaleString()}/year</span>
+            <span class="cause-name">${themeNames[theme] || theme}</span>
+            <span class="cause-amount">€${Math.round(perCause).toLocaleString()}/yr</span>
         `;
         causesList.appendChild(div);
     });
 }
 
-function setupDonationForm() {
-    const form = document.getElementById('donationForm');
-    if (!form) return;
-    
-    // Set today's date as default
-    const dateInput = document.getElementById('donationDate');
-    if (dateInput) {
-        dateInput.valueAsDate = new Date();
+// ── Donation history ──────────────────────────────────────────────────────
+const HISTORY_PREVIEW_COUNT = 8;
+
+function displayDonationHistory(donations) {
+    const container = document.getElementById('donationHistoryList');
+    const countEl   = document.getElementById('donationCount');
+    const toggleBtn = document.getElementById('toggleHistory');
+    if (!container) return;
+
+    const sorted = [...donations].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    if (countEl) countEl.textContent = `${sorted.length} donation${sorted.length !== 1 ? 's' : ''}`;
+
+    if (sorted.length === 0) {
+        container.innerHTML = '<p class="no-donations">No donations yet. Add your first donation below.</p>';
+        if (toggleBtn) toggleBtn.style.display = 'none';
+        return;
     }
-    
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const amount = parseFloat(document.getElementById('donationAmount').value);
-        const date = document.getElementById('donationDate').value;
-        
-        if (!amount || !date) return;
-        
-        // Get existing donations
-        const donations = JSON.parse(localStorage.getItem('donations') || '[]');
-        
-        // Add new donation
-        donations.push({ amount, date });
-        
-        // Save
-        localStorage.setItem('donations', JSON.stringify(donations));
-        
-        // Refresh display
-        displayMetrics(donations);
-        
-        // Recreate chart
-        const chartCanvas = document.getElementById('compoundingChart');
-        const oldChart = Chart.getChart(chartCanvas);
-        if (oldChart) oldChart.destroy();
-        displayChart(donations);
-        
-        // Update causes
-        const userData = JSON.parse(localStorage.getItem('user'));
-        displayCausesBreakdown(userData.themes, donations);
-        
-        // Reset form
-        form.reset();
-        dateInput.valueAsDate = new Date();
-        
-        // Show success feedback
-        alert('Donation added successfully!');
+
+    renderHistoryItems(container, sorted, HISTORY_PREVIEW_COUNT);
+
+    if (toggleBtn) {
+        if (sorted.length > HISTORY_PREVIEW_COUNT) {
+            toggleBtn.style.display     = 'block';
+            toggleBtn.dataset.expanded  = 'false';
+            toggleBtn.textContent       = `Show all ${sorted.length} donations`;
+        } else {
+            toggleBtn.style.display = 'none';
+        }
+    }
+}
+
+function renderHistoryItems(container, sorted, limit) {
+    const toShow = limit ? sorted.slice(0, limit) : sorted;
+    container.innerHTML = '';
+    toShow.forEach(d => {
+        const item      = document.createElement('div');
+        item.className  = 'history-item';
+        const date      = new Date(d.date);
+        const formatted = date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+        item.innerHTML  = `
+            <span class="history-date">${formatted}</span>
+            <span class="history-amount">€${d.amount.toLocaleString()}</span>
+        `;
+        container.appendChild(item);
     });
 }
 
+function setupHistoryToggle(donations) {
+    const toggleBtn = document.getElementById('toggleHistory');
+    if (!toggleBtn) return;
+
+    const newBtn = toggleBtn.cloneNode(true);
+    toggleBtn.parentNode.replaceChild(newBtn, toggleBtn);
+
+    newBtn.addEventListener('click', function () {
+        const container  = document.getElementById('donationHistoryList');
+        const sorted     = [...donations].sort((a, b) => new Date(b.date) - new Date(a.date));
+        const isExpanded = newBtn.dataset.expanded === 'true';
+
+        if (isExpanded) {
+            renderHistoryItems(container, sorted, HISTORY_PREVIEW_COUNT);
+            newBtn.textContent      = `Show all ${sorted.length} donations`;
+            newBtn.dataset.expanded = 'false';
+        } else {
+            renderHistoryItems(container, sorted, null);
+            newBtn.textContent      = 'Show less';
+            newBtn.dataset.expanded = 'true';
+        }
+    });
+}
+
+// ── Donation form ─────────────────────────────────────────────────────────
+function setupDonationForm() {
+    const form      = document.getElementById('donationForm');
+    if (!form) return;
+
+    const dateInput = document.getElementById('donationDate');
+    if (dateInput) dateInput.valueAsDate = new Date();
+
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        const amount = parseFloat(document.getElementById('donationAmount').value);
+        const date   = document.getElementById('donationDate').value;
+
+        if (!amount || !date || amount <= 0) {
+            showToast('Please enter a valid amount and date', 'error');
+            return;
+        }
+
+        const donations = JSON.parse(localStorage.getItem('donations') || '[]');
+        donations.push({ amount, date });
+        localStorage.setItem('donations', JSON.stringify(donations));
+
+        const filtered = getFilteredDonations();
+        displayMetrics(filtered);
+
+        const chartCanvas = document.getElementById('compoundingChart');
+        const oldChart    = Chart.getChart(chartCanvas);
+        if (oldChart) oldChart.destroy();
+        displayChart(filtered);
+
+        if (_impactUserData) displayCausesBreakdown(_impactUserData.themes, filtered);
+        displayDonationHistory(filtered);
+        setupHistoryToggle(filtered);
+
+        form.reset();
+        if (dateInput) dateInput.valueAsDate = new Date();
+
+        showToast(`€${amount.toLocaleString()} donation added successfully`);
+    });
+}
+
+// ── Demo data reset ───────────────────────────────────────────────────────
 function setupResetDemoData() {
     const resetBtn = document.getElementById('resetDemoData');
     if (!resetBtn) return;
-    
-    resetBtn.addEventListener('click', function() {
+
+    resetBtn.addEventListener('click', function () {
         if (confirm('Reset to demo data? This will replace your current donation history with 7.5 years of sample data.')) {
-            // Generate fresh demo data
-            const sampleDonations = generateRealisticDonations();
-            localStorage.setItem('donations', JSON.stringify(sampleDonations));
-            
-            // Reload page to show new data
+            localStorage.setItem('donations', JSON.stringify(generateRealisticDonations()));
             location.reload();
         }
     });
 }
 
+// ── Prediction calculator ─────────────────────────────────────────────────
 function setupPredictionCalculator() {
     const calcButton = document.getElementById('calculatePrediction');
-    if (!calcButton) {
-        console.warn('Calculate prediction button not found');
-        return;
-    }
-    
-    calcButton.addEventListener('click', function() {
-        try {
-            const newMonthlyInput = document.getElementById('newMonthlyAmount');
-            const yearsInput = document.getElementById('projectionYears');
-            
-            if (!newMonthlyInput || !yearsInput) {
-                console.error('Prediction inputs not found');
-                return;
-            }
-            
-            const newMonthly = parseFloat(newMonthlyInput.value);
-            const years = parseInt(yearsInput.value);
-            
-            if (!newMonthly || !years || newMonthly <= 0 || years <= 0) {
-                alert('Please enter valid monthly amount and projection years');
-                return;
-            }
-            
-            // Get current donations and metrics
-            const donations = JSON.parse(localStorage.getItem('donations') || '[]');
-            
-            if (donations.length === 0) {
-                alert('No donation data found. Please add donations or reset to demo data first.');
-                return;
-            }
-            
-            const currentMetrics = calculateCompounding(donations);
-            
-            // Calculate current monthly average
-            const currentMonthly = calculateMonthlyAverage(donations);
-            
-            if (currentMonthly === 0) {
-                alert('Unable to calculate monthly average. Please ensure you have donations in the last 12 months.');
-                return;
-            }
-            
-            console.log('Current monthly:', currentMonthly, 'New monthly:', newMonthly, 'Years:', years);
-            
-            // Project future with CURRENT monthly amount
-            const currentProjection = projectFuture(currentMetrics.portfolioValue, currentMonthly, years);
-            
-            // Project future with NEW monthly amount
-            const newProjection = projectFuture(currentMetrics.portfolioValue, newMonthly, years);
-            
-            // Display comparison chart
-            displayPredictionChart(currentProjection, newProjection, currentMonthly, newMonthly);
-            
-            // Show results section
-            document.getElementById('predictionResults').style.display = 'block';
-            
-            // Update result text for both scenarios
-            const currentFutureValue = currentProjection[currentProjection.length - 1].portfolio;
-            const newFutureValue = newProjection[newProjection.length - 1].portfolio;
-            
-            const currentFutureImpact = currentFutureValue * 0.05 * 0.40;
-            const newFutureImpact = newFutureValue * 0.05 * 0.40;
-            
-            document.getElementById('currentScenarioValue').textContent = 
-                `€${Math.round(currentFutureValue).toLocaleString()}`;
-            document.getElementById('currentScenarioImpact').textContent = 
-                `€${Math.round(currentFutureImpact).toLocaleString()}`;
-            
-            document.getElementById('newScenarioValue').textContent = 
-                `€${Math.round(newFutureValue).toLocaleString()}`;
-            document.getElementById('newScenarioImpact').textContent = 
-                `€${Math.round(newFutureImpact).toLocaleString()}`;
-            
-            // Show difference
-            const valueDiff = newFutureValue - currentFutureValue;
-            const impactDiff = newFutureImpact - currentFutureImpact;
-            
-            document.getElementById('valueDifference').textContent = 
-                `${valueDiff >= 0 ? '+' : ''}€${Math.round(valueDiff).toLocaleString()}`;
-            document.getElementById('impactDifference').textContent = 
-                `${impactDiff >= 0 ? '+' : ''}€${Math.round(impactDiff).toLocaleString()}`;
-            
-            console.log('Prediction calculated successfully');
-            
-        } catch (error) {
-            console.error('Error calculating prediction:', error);
-            alert('An error occurred while calculating the prediction. Please try again or check the console for details.');
+    if (!calcButton) return;
+
+    calcButton.addEventListener('click', function () {
+        const newMonthlyInput = document.getElementById('newMonthlyAmount');
+        const yearsInput      = document.getElementById('projectionYears');
+        if (!newMonthlyInput || !yearsInput) return;
+
+        const newMonthly = parseFloat(newMonthlyInput.value);
+        const years      = parseInt(yearsInput.value);
+
+        if (!newMonthly || !years || newMonthly <= 0 || years <= 0) {
+            showToast('Please enter a valid monthly amount and projection years', 'error');
+            return;
         }
+
+        const donations        = JSON.parse(localStorage.getItem('donations') || '[]');
+        if (donations.length === 0) {
+            showToast('No donation data found. Add donations or reset to demo data first.', 'error');
+            return;
+        }
+
+        const currentMetrics  = calculateCompounding(donations);
+        const currentMonthly  = calculateMonthlyAverage(donations);
+
+        if (currentMonthly === 0) {
+            showToast('No donations in the last 12 months to calculate an average from.', 'error');
+            return;
+        }
+
+        const currentProjection = projectFuture(currentMetrics.portfolioValue, currentMonthly, years);
+        const newProjection     = projectFuture(currentMetrics.portfolioValue, newMonthly, years);
+
+        displayPredictionChart(currentProjection, newProjection, currentMonthly, newMonthly);
+        document.getElementById('predictionResults').style.display = 'block';
+
+        const currentFutureValue  = currentProjection[currentProjection.length - 1].portfolio;
+        const newFutureValue      = newProjection[newProjection.length - 1].portfolio;
+        const currentFutureImpact = currentFutureValue * 0.05 * 0.40;
+        const newFutureImpact     = newFutureValue     * 0.05 * 0.40;
+
+        document.getElementById('currentScenarioValue').textContent  = `€${Math.round(currentFutureValue).toLocaleString()}`;
+        document.getElementById('currentScenarioImpact').textContent = `€${Math.round(currentFutureImpact).toLocaleString()}`;
+        document.getElementById('newScenarioValue').textContent      = `€${Math.round(newFutureValue).toLocaleString()}`;
+        document.getElementById('newScenarioImpact').textContent     = `€${Math.round(newFutureImpact).toLocaleString()}`;
+
+        const valueDiff  = newFutureValue  - currentFutureValue;
+        const impactDiff = newFutureImpact - currentFutureImpact;
+
+        document.getElementById('valueDifference').textContent  = `${valueDiff  >= 0 ? '+' : ''}€${Math.round(valueDiff).toLocaleString()}`;
+        document.getElementById('impactDifference').textContent = `${impactDiff >= 0 ? '+' : ''}€${Math.round(impactDiff).toLocaleString()}`;
+
+        document.getElementById('predictionResults').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
 }
 
 function projectFuture(currentPortfolio, monthlyDonation, years) {
     const ANNUAL_DIVIDEND_RATE = 0.05;
-    const REINVEST_RATE = 0.50;
-    
-    const dataPoints = [];
+    const REINVEST_RATE        = 0.50;
+
+    const dataPoints  = [];
     let portfolioValue = currentPortfolio;
-    let month = 0;
-    const totalMonths = years * 12;
-    
-    for (month = 0; month <= totalMonths; month++) {
-        // Add monthly donation
+    const totalMonths  = years * 12;
+
+    for (let month = 0; month <= totalMonths; month++) {
         portfolioValue += monthlyDonation;
-        
-        // Calculate monthly dividend and reinvestment
         const monthlyDividend = portfolioValue * (ANNUAL_DIVIDEND_RATE / 12);
-        const reinvestAmount = monthlyDividend * REINVEST_RATE;
-        portfolioValue += reinvestAmount;
-        
-        // Save data point every 3 months (quarterly)
+        portfolioValue       += monthlyDividend * REINVEST_RATE;
+
         if (month % 3 === 0) {
-            dataPoints.push({
-                month: month,
-                portfolio: Math.round(portfolioValue * 100) / 100
-            });
+            dataPoints.push({ month, portfolio: Math.round(portfolioValue * 100) / 100 });
         }
     }
-    
     return dataPoints;
 }
 
 function displayPredictionChart(currentProjection, newProjection, currentMonthly, newMonthly) {
     const ctx = document.getElementById('predictionChart');
     if (!ctx) return;
-    
-    // Destroy existing chart if exists
+
     const existingChart = Chart.getChart(ctx);
     if (existingChart) existingChart.destroy();
-    
+
     new Chart(ctx, {
         type: 'line',
         data: {
             labels: currentProjection.map(d => `Month ${d.month}`),
             datasets: [
                 {
-                    label: `Current Scenario (€${currentMonthly.toFixed(0)}/month)`,
-                    data: currentProjection.map(d => d.portfolio),
-                    borderColor: '#A89E8C',
+                    label:           `Current (€${currentMonthly.toFixed(0)}/mo)`,
+                    data:            currentProjection.map(d => d.portfolio),
+                    borderColor:     '#A89E8C',
                     backgroundColor: 'rgba(168, 158, 140, 0.1)',
-                    borderWidth: 3,
-                    borderDash: [5, 5],
-                    tension: 0.4,
-                    fill: false
+                    borderWidth:     2,
+                    borderDash:      [5, 5],
+                    tension:         0.4,
+                    fill:            false
                 },
                 {
-                    label: `New Scenario (€${newMonthly}/month)`,
-                    data: newProjection.map(d => d.portfolio),
-                    borderColor: '#32CD32',
+                    label:           `New (€${newMonthly}/mo)`,
+                    data:            newProjection.map(d => d.portfolio),
+                    borderColor:     '#32CD32',
                     backgroundColor: 'rgba(50, 205, 50, 0.1)',
-                    borderWidth: 3,
-                    tension: 0.4,
-                    fill: false
+                    borderWidth:     3,
+                    tension:         0.4,
+                    fill:            false
                 }
             ]
         },
         options: {
-            responsive: true,
+            responsive:          true,
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    display: true,
+                    display:  true,
                     position: 'top',
                     labels: {
-                        color: '#F5F1E8',
+                        color:         '#F5F1E8',
                         usePointStyle: true,
-                        padding: 15,
-                        font: {
-                            size: 12,
-                            family: "'IBM Plex Sans', sans-serif"
-                        }
+                        padding:       15,
+                        font: { size: 12, family: "'IBM Plex Sans', sans-serif" }
                     }
                 },
                 tooltip: {
-                    backgroundColor: 'rgba(26, 22, 37, 0.9)',
-                    titleColor: '#F5F1E8',
-                    bodyColor: '#F5F1E8',
+                    backgroundColor: 'rgba(26, 18, 32, 0.9)',
+                    titleColor:      '#F5F1E8',
+                    bodyColor:       '#F5F1E8',
                     callbacks: {
-                        label: function(context) {
-                            return context.dataset.label + ': €' + context.parsed.y.toLocaleString();
-                        }
+                        label: ctx => ctx.dataset.label + ': €' + ctx.parsed.y.toLocaleString()
                     }
                 }
             },
@@ -727,78 +782,14 @@ function displayPredictionChart(currentProjection, newProjection, currentMonthly
                 y: {
                     beginAtZero: false,
                     ticks: {
-                        color: '#A89E8C',
-                        callback: function(value) {
-                            return '€' + value.toLocaleString();
-                        }
+                        color:    '#A89E8C',
+                        callback: value => '€' + value.toLocaleString()
                     },
-                    grid: {
-                        color: 'rgba(245, 241, 232, 0.1)'
-                    }
+                    grid: { color: 'rgba(245, 241, 232, 0.1)' }
                 },
                 x: {
-                    ticks: {
-                        color: '#A89E8C',
-                        maxRotation: 45,
-                        minRotation: 45
-                    },
-                    grid: {
-                        color: 'rgba(245, 241, 232, 0.05)'
-                    }
-                }
-            }
-        }
-    });
-}
-                    data: projection.map(d => d.portfolio),
-                    borderColor: '#32CD32',
-                    backgroundColor: 'rgba(50, 205, 50, 0.1)',
-                    borderWidth: 3,
-                    tension: 0.4,
-                    fill: true
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                },
-                tooltip: {
-                    backgroundColor: 'rgba(26, 22, 37, 0.9)',
-                    titleColor: '#F5F1E8',
-                    bodyColor: '#F5F1E8',
-                    callbacks: {
-                        label: function(context) {
-                            return 'Portfolio: €' + context.parsed.y.toLocaleString();
-                        }
-                    }
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: false,
-                    ticks: {
-                        color: '#A89E8C',
-                        callback: function(value) {
-                            return '€' + value.toLocaleString();
-                        }
-                    },
-                    grid: {
-                        color: 'rgba(245, 241, 232, 0.1)'
-                    }
-                },
-                x: {
-                    ticks: {
-                        color: '#A89E8C',
-                        maxRotation: 45,
-                        minRotation: 45
-                    },
-                    grid: {
-                        color: 'rgba(245, 241, 232, 0.05)'
-                    }
+                    ticks: { color: '#A89E8C', maxRotation: 45, minRotation: 45 },
+                    grid:  { color: 'rgba(245, 241, 232, 0.05)' }
                 }
             }
         }

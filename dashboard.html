@@ -6,103 +6,478 @@
     <title>Dashboard - Bob</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="dashboard.css">
+    <link rel="stylesheet" href="impact.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=IBM+Plex+Sans:wght@300;400&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="dashboard-page">
     <div class="gradient-background" id="gradientBg"></div>
-    
+    <div id="toastContainer" class="toast-container"></div>
+
     <div class="dashboard-wrapper">
         <header class="dashboard-header">
             <h1 class="logo">Bob</h1>
             <nav class="dashboard-nav">
                 <a href="index.html">Home</a>
-                <a href="#" id="logoutBtn">Logout</a>
+                <a href="javascript:void(0)" id="logoutBtn" onclick="doLogout()">Logout</a>
             </nav>
         </header>
-        
+
         <div class="dashboard-content">
-            <!-- User Profile Card -->
+            <!-- Left: User Profile Card -->
             <div class="profile-card">
                 <div class="profile-avatar" id="userAvatar"></div>
                 <h2 class="user-name" id="userName">Loading...</h2>
                 <p class="user-username" id="userUsername">@username</p>
-                
+
                 <div class="user-themes">
                     <h3>Your Causes</h3>
                     <div class="themes-list" id="themesList"></div>
                 </div>
-                
+
                 <button class="edit-profile-btn">Edit Profile</button>
             </div>
-            
-            <!-- Personal Updates Section -->
-            <div class="updates-section">
-                <h2 class="section-title">Your Personal Updates</h2>
-                <p class="coming-soon">Track your impact, stay informed, and connect with others making a difference.</p>
-                
-                <div class="placeholder-cards">
-                    <a href="impact.html" class="placeholder-card clickable">
-                        <div class="placeholder-icon">
-                            <svg viewBox="0 0 100 100" class="custom-icon">
-                                <!-- Organic growth tree icon -->
-                                <path d="M50 80 L50 40" stroke="currentColor" stroke-width="3" fill="none"/>
-                                <circle cx="50" cy="30" r="8" fill="currentColor" opacity="0.8"/>
-                                <path d="M42 35 Q35 40, 38 48" stroke="currentColor" stroke-width="2" fill="none"/>
-                                <path d="M58 35 Q65 40, 62 48" stroke="currentColor" stroke-width="2" fill="none"/>
-                                <circle cx="38" cy="48" r="6" fill="currentColor" opacity="0.6"/>
-                                <circle cx="62" cy="48" r="6" fill="currentColor" opacity="0.6"/>
-                                <path d="M35 52 Q28 58, 30 65" stroke="currentColor" stroke-width="1.5" fill="none"/>
-                                <path d="M65 52 Q72 58, 70 65" stroke="currentColor" stroke-width="1.5" fill="none"/>
-                                <circle cx="30" cy="65" r="4" fill="currentColor" opacity="0.4"/>
-                                <circle cx="70" cy="65" r="4" fill="currentColor" opacity="0.4"/>
-                            </svg>
-                        </div>
-                        <h3>Impact Dashboard</h3>
-                        <p>Track your contributions and see their real-world compounding growth</p>
-                    </a>
-                    
-                    <a href="news.html" class="placeholder-card clickable">
-                        <div class="placeholder-icon">
-                            <svg viewBox="0 0 100 100" class="custom-icon">
-                                <!-- Sun/enlightenment icon -->
-                                <circle cx="50" cy="50" r="15" fill="currentColor"/>
-                                <line x1="50" y1="20" x2="50" y2="30" stroke="currentColor" stroke-width="3"/>
-                                <line x1="50" y1="70" x2="50" y2="80" stroke="currentColor" stroke-width="3"/>
-                                <line x1="20" y1="50" x2="30" y2="50" stroke="currentColor" stroke-width="3"/>
-                                <line x1="70" y1="50" x2="80" y2="50" stroke="currentColor" stroke-width="3"/>
-                                <line x1="30" y1="30" x2="37" y2="37" stroke="currentColor" stroke-width="2.5"/>
-                                <line x1="63" y1="63" x2="70" y2="70" stroke="currentColor" stroke-width="2.5"/>
-                                <line x1="70" y1="30" x2="63" y2="37" stroke="currentColor" stroke-width="2.5"/>
-                                <line x1="37" y1="63" x2="30" y2="70" stroke="currentColor" stroke-width="2.5"/>
-                            </svg>
-                        </div>
-                        <h3>Curated News</h3>
-                        <p>Latest updates on causes that matter to you</p>
-                    </a>
-                    
-                    <a href="connect.html" class="placeholder-card clickable">
-                        <div class="placeholder-icon">
-                            <svg viewBox="0 0 100 100" class="custom-icon">
-                                <!-- Two people hugging icon -->
-                                <ellipse cx="35" cy="30" rx="8" ry="10" fill="currentColor"/>
-                                <ellipse cx="65" cy="30" rx="8" ry="10" fill="currentColor"/>
-                                <path d="M35 40 Q30 55, 35 70 L35 85" stroke="currentColor" stroke-width="8" fill="none" stroke-linecap="round"/>
-                                <path d="M65 40 Q70 55, 65 70 L65 85" stroke="currentColor" stroke-width="8" fill="none" stroke-linecap="round"/>
-                                <path d="M30 50 Q28 60, 35 65" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round"/>
-                                <path d="M70 50 Q72 60, 65 65" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round"/>
-                            </svg>
-                        </div>
-                        <h3>Connect & Collaborate</h3>
-                        <p>Find others passionate about the same causes</p>
-                    </a>
+
+            <!-- Right: Tabbed Content Area -->
+            <div class="main-content-area">
+
+                <!-- Tab Navigation -->
+                <div class="content-tabs">
+                    <button class="tab-btn active" data-tab="impact">
+                        <svg viewBox="0 0 24 24" class="tab-icon" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                        </svg>
+                        Impact Dashboard
+                    </button>
+                    <button class="tab-btn" data-tab="news">
+                        <svg viewBox="0 0 24 24" class="tab-icon" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                            <circle cx="12" cy="12" r="4"/>
+                            <line x1="12" y1="2" x2="12" y2="4"/>
+                            <line x1="12" y1="20" x2="12" y2="22"/>
+                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                            <line x1="2" y1="12" x2="4" y2="12"/>
+                            <line x1="20" y1="12" x2="22" y2="12"/>
+                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                        </svg>
+                        Curated News
+                    </button>
+                    <button class="tab-btn" data-tab="connect">
+                        <svg viewBox="0 0 24 24" class="tab-icon" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                            <circle cx="9" cy="7" r="4"/>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                        </svg>
+                        Connect & Collaborate
+                    </button>
                 </div>
-            </div>
-        </div>
-    </div>
-    
+
+                <!-- ── IMPACT TAB ── -->
+                <div class="tab-panel" id="tab-impact">
+
+                    <!-- Date Range Filter -->
+                    <div class="date-filter-bar">
+                        <div class="filter-presets">
+                            <span class="filter-label">View:</span>
+                            <button class="filter-preset active" data-range="all">All Time</button>
+                            <button class="filter-preset" data-range="1y">Last Year</button>
+                            <button class="filter-preset" data-range="3y">Last 3 Years</button>
+                            <button class="filter-preset" data-range="custom">Custom</button>
+                        </div>
+                        <div class="filter-custom" id="filterCustom">
+                            <div class="filter-date-group">
+                                <label for="filterFrom">From</label>
+                                <input type="date" id="filterFrom">
+                            </div>
+                            <div class="filter-date-group">
+                                <label for="filterTo">To</label>
+                                <input type="date" id="filterTo">
+                            </div>
+                            <button id="applyFilter" class="filter-apply-btn">Apply</button>
+                        </div>
+                    </div>
+
+                    <!-- Impact Header -->
+                    <div class="impact-header">
+                        <h1 class="page-title">Your Impact Dashboard</h1>
+                        <p class="page-subtitle">
+                            Watch your philanthropic legacy grow
+                            <span class="years-badge" id="yearsGivingBadge" style="display: none;">
+                                · <span id="yearsGiving"></span> of giving
+                            </span>
+                        </p>
+                    </div>
+
+                    <!-- Key Metrics -->
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-icon">
+                                <svg viewBox="0 0 100 100" class="icon-donate">
+                                    <path d="M50 20 L50 80 M30 50 L70 50" stroke="currentColor" stroke-width="3" fill="none"/>
+                                    <circle cx="50" cy="50" r="30" stroke="currentColor" stroke-width="2" fill="none"/>
+                                </svg>
+                            </div>
+                            <h3 class="metric-label">Total Donated</h3>
+                            <p class="metric-value" id="totalDonated">€0</p>
+                            <p class="metric-change">Since joining</p>
+                        </div>
+
+                        <div class="metric-card">
+                            <div class="metric-icon">
+                                <svg viewBox="0 0 100 100" class="icon-monthly">
+                                    <rect x="20" y="60" width="15" height="20" fill="currentColor" opacity="0.4"/>
+                                    <rect x="42" y="50" width="15" height="30" fill="currentColor" opacity="0.6"/>
+                                    <rect x="64" y="35" width="15" height="45" fill="currentColor" opacity="0.8"/>
+                                </svg>
+                            </div>
+                            <h3 class="metric-label">Monthly Average</h3>
+                            <p class="metric-value" id="monthlyDonations">€0</p>
+                            <p class="metric-change">Last 12 months</p>
+                        </div>
+
+                        <div class="metric-card highlight">
+                            <div class="metric-icon">
+                                <svg viewBox="0 0 100 100" class="icon-growth">
+                                    <path d="M20 80 Q30 60, 40 65 T60 50 T80 30" stroke="currentColor" stroke-width="3" fill="none"/>
+                                    <path d="M75 25 L85 30 L80 40" fill="currentColor"/>
+                                </svg>
+                            </div>
+                            <h3 class="metric-label">Portfolio Value</h3>
+                            <p class="metric-value" id="portfolioValue">€0</p>
+                            <p class="metric-change" id="portfolioGrowth">+0% growth</p>
+                        </div>
+
+                        <div class="metric-card">
+                            <div class="metric-icon">
+                                <svg viewBox="0 0 100 100" class="icon-impact">
+                                    <circle cx="50" cy="50" r="20" fill="currentColor" opacity="0.3"/>
+                                    <circle cx="50" cy="50" r="30" fill="none" stroke="currentColor" stroke-width="2" opacity="0.5"/>
+                                    <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" stroke-width="1" opacity="0.3"/>
+                                </svg>
+                            </div>
+                            <h3 class="metric-label">Annual Impact</h3>
+                            <p class="metric-value" id="annualImpact">€0</p>
+                            <p class="metric-change">Distributed to causes</p>
+                        </div>
+                    </div>
+
+                    <!-- Growth Chart -->
+                    <div class="chart-section">
+                        <div class="chart-header">
+                            <div>
+                                <h2 class="section-title">Growth Over Time</h2>
+                                <p class="section-description">
+                                    50% of dividends reinvested for compounding growth, 40% to your causes, 10% operational costs.
+                                </p>
+                            </div>
+                            <div class="view-toggle">
+                                <button id="viewMonthly" class="toggle-btn active">Monthly</button>
+                                <button id="viewYearly" class="toggle-btn">Yearly</button>
+                            </div>
+                        </div>
+
+                        <div class="chart-container">
+                            <canvas id="compoundingChart"></canvas>
+                        </div>
+                        <p class="chart-note">Click legend items to show/hide lines</p>
+
+                        <div class="milestone-alert" id="milestoneAlert" style="display: none;">
+                            <svg viewBox="0 0 24 24" class="alert-icon">
+                                <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="currentColor"/>
+                                <path d="M2 17L12 22L22 17M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" fill="none"/>
+                            </svg>
+                            <div>
+                                <strong>Milestone Reached!</strong>
+                                <p>Your portfolio now generates more annual impact than your yearly donations</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Impact Breakdown -->
+                    <div class="breakdown-grid">
+                        <div class="breakdown-card">
+                            <h3 class="breakdown-title">Fund Allocation</h3>
+                            <div class="allocation-visual">
+                                <div class="donut-chart-wrapper">
+                                    <canvas id="allocationChart"></canvas>
+                                </div>
+                                <div class="allocation-list">
+                                    <div class="allocation-item">
+                                        <div class="allocation-label">
+                                            <span class="allocation-dot reinvest"></span>
+                                            <span>Reinvested</span>
+                                        </div>
+                                        <span class="allocation-percent">50%</span>
+                                    </div>
+                                    <div class="allocation-item">
+                                        <div class="allocation-label">
+                                            <span class="allocation-dot causes"></span>
+                                            <span>Your Causes</span>
+                                        </div>
+                                        <span class="allocation-percent">40%</span>
+                                    </div>
+                                    <div class="allocation-item">
+                                        <div class="allocation-label">
+                                            <span class="allocation-dot maintenance"></span>
+                                            <span>Maintenance</span>
+                                        </div>
+                                        <span class="allocation-percent">10%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="breakdown-card">
+                            <h3 class="breakdown-title">Your Cause Distribution</h3>
+                            <p class="breakdown-description">40% of dividends split across your themes</p>
+                            <div class="causes-list" id="causesList"></div>
+                        </div>
+
+                        <div class="breakdown-card">
+                            <h3 class="breakdown-title">Cumulative Impact</h3>
+                            <p class="breakdown-description">Total distributed from dividends</p>
+                            <div class="allocation-list">
+                                <div class="allocation-item">
+                                    <div class="allocation-label">
+                                        <span class="allocation-dot reinvest"></span>
+                                        <span>Total Reinvested</span>
+                                    </div>
+                                    <span class="allocation-percent" id="totalReinvested">€0</span>
+                                </div>
+                                <div class="allocation-item">
+                                    <div class="allocation-label">
+                                        <span class="allocation-dot causes"></span>
+                                        <span>Total to Causes</span>
+                                    </div>
+                                    <span class="allocation-percent" id="totalCauses">€0</span>
+                                </div>
+                                <div class="allocation-item">
+                                    <div class="allocation-label">
+                                        <span class="allocation-dot maintenance"></span>
+                                        <span>Total Maintenance</span>
+                                    </div>
+                                    <span class="allocation-percent" id="totalMaintenance">€0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Donation History -->
+                    <div class="history-section">
+                        <div class="history-header">
+                            <div>
+                                <h2 class="section-title">Donation History</h2>
+                                <p class="section-description">Your giving journey over time</p>
+                            </div>
+                            <span class="history-count-badge" id="donationCount"></span>
+                        </div>
+                        <div class="history-list" id="donationHistoryList"></div>
+                        <button id="toggleHistory" class="toggle-history-btn" style="display: none;">
+                            Show all donations
+                        </button>
+                    </div>
+
+                    <!-- Future Prediction Calculator -->
+                    <div class="prediction-section">
+                        <h2 class="section-title">Future Impact Projection</h2>
+                        <p class="section-description">
+                            See how adjusting your monthly donation will shape your portfolio's growth and philanthropic reach.
+                        </p>
+
+                        <div class="prediction-calculator">
+                            <div class="calculator-inputs">
+                                <div class="form-group">
+                                    <label for="newMonthlyAmount">New Monthly Amount (€)</label>
+                                    <input type="number" id="newMonthlyAmount" min="1" step="1" value="20" placeholder="20">
+                                </div>
+                                <div class="form-group">
+                                    <label for="projectionYears">Years to Project</label>
+                                    <input type="number" id="projectionYears" min="1" max="30" value="10" placeholder="10">
+                                </div>
+                                <button id="calculatePrediction" class="submit-button">Calculate</button>
+                            </div>
+
+                            <div class="prediction-results" id="predictionResults" style="display: none;">
+                                <h3 class="comparison-title">Scenario Comparison</h3>
+                                <div class="comparison-grid">
+                                    <div class="scenario-card current">
+                                        <h4>Current Pace</h4>
+                                        <div class="scenario-metrics">
+                                            <div class="metric">
+                                                <span class="metric-label">Portfolio Value</span>
+                                                <span class="metric-value" id="currentScenarioValue">€0</span>
+                                            </div>
+                                            <div class="metric">
+                                                <span class="metric-label">Annual Impact</span>
+                                                <span class="metric-value" id="currentScenarioImpact">€0</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="scenario-card new">
+                                        <h4>New Scenario</h4>
+                                        <div class="scenario-metrics">
+                                            <div class="metric">
+                                                <span class="metric-label">Portfolio Value</span>
+                                                <span class="metric-value" id="newScenarioValue">€0</span>
+                                            </div>
+                                            <div class="metric">
+                                                <span class="metric-label">Annual Impact</span>
+                                                <span class="metric-value" id="newScenarioImpact">€0</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="scenario-card difference">
+                                        <h4>Difference</h4>
+                                        <div class="scenario-metrics">
+                                            <div class="metric">
+                                                <span class="metric-label">Portfolio Value</span>
+                                                <span class="metric-value green" id="valueDifference">€0</span>
+                                            </div>
+                                            <div class="metric">
+                                                <span class="metric-label">Annual Impact</span>
+                                                <span class="metric-value green" id="impactDifference">€0</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="chart-container" style="height: 300px; margin-top: 2rem;">
+                                    <canvas id="predictionChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Add Donation Section -->
+                    <div class="add-donation-section">
+                        <h2 class="section-title">Add a Donation</h2>
+                        <p class="section-description">Record a new contribution to your philanthropic portfolio</p>
+                        <form id="donationForm" class="donation-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="donationAmount">Amount (€)</label>
+                                    <input type="number" id="donationAmount" min="1" step="0.01" required placeholder="0.00">
+                                </div>
+                                <div class="form-group">
+                                    <label for="donationDate">Date</label>
+                                    <input type="date" id="donationDate" required>
+                                </div>
+                            </div>
+                            <button type="submit" class="submit-button">Add Donation</button>
+                        </form>
+
+                        <div class="demo-data-reset">
+                            <p class="reset-description">Want to explore with demo data? Reset to 7.5 years of sample donations with compounding effects.</p>
+                            <button id="resetDemoData" class="reset-button">Reset to Demo Data</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── NEWS TAB ── -->
+                <div class="tab-panel tab-panel-hidden" id="tab-news">
+                    <div class="placeholder-tab-content">
+                        <div class="placeholder-tab-header">
+                            <svg viewBox="0 0 24 24" class="placeholder-tab-icon" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round">
+                                <circle cx="12" cy="12" r="4"/>
+                                <line x1="12" y1="2" x2="12" y2="4"/>
+                                <line x1="12" y1="20" x2="12" y2="22"/>
+                                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                                <line x1="2" y1="12" x2="4" y2="12"/>
+                                <line x1="20" y1="12" x2="22" y2="12"/>
+                                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                            </svg>
+                            <h2>Curated News</h2>
+                            <p>Stories and updates from the causes you care about most</p>
+                        </div>
+
+                        <div class="news-feed">
+                            <div class="news-item">
+                                <span class="news-tag">Environment & Climate</span>
+                                <h3>Global reforestation efforts reach 1 billion trees milestone</h3>
+                                <p>A worldwide coalition of NGOs and governments has surpassed a major milestone in the effort to restore natural forests across five continents.</p>
+                                <span class="news-meta">2 days ago · The Guardian</span>
+                            </div>
+                            <div class="news-item">
+                                <span class="news-tag">Education & Knowledge</span>
+                                <h3>New scholarship program opens doors for 10,000 students</h3>
+                                <p>An international fund announced a new initiative providing full scholarships for students in underserved communities across Southeast Asia.</p>
+                                <span class="news-meta">4 days ago · Reuters</span>
+                            </div>
+                            <div class="news-item">
+                                <span class="news-tag">Health & Medicine</span>
+                                <h3>WHO reports significant drop in preventable childhood diseases</h3>
+                                <p>Thanks to expanded vaccination programs, the World Health Organization recorded a 35% reduction in preventable childhood illness across low-income countries.</p>
+                                <span class="news-meta">1 week ago · WHO</span>
+                            </div>
+                            <div class="news-item">
+                                <span class="news-tag">Basic Needs & Poverty</span>
+                                <h3>Microfinance initiative lifts 50,000 families above poverty line</h3>
+                                <p>A community-driven microfinance project in Sub-Saharan Africa has successfully helped over 50,000 families achieve financial independence.</p>
+                                <span class="news-meta">2 weeks ago · AP News</span>
+                            </div>
+                        </div>
+
+                        <div class="coming-soon-badge">
+                            <span>Personalised news feed coming soon</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── CONNECT TAB ── -->
+                <div class="tab-panel tab-panel-hidden" id="tab-connect">
+                    <div class="placeholder-tab-content">
+                        <div class="placeholder-tab-header">
+                            <svg viewBox="0 0 24 24" class="placeholder-tab-icon" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                <circle cx="9" cy="7" r="4"/>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                            </svg>
+                            <h2>Connect & Collaborate</h2>
+                            <p>Find others who share your passion for making a difference</p>
+                        </div>
+
+                        <div class="connect-grid">
+                            <div class="connect-card">
+                                <div class="connect-avatar connect-avatar-1"></div>
+                                <h3>Anna M.</h3>
+                                <p class="connect-causes">Environment · Education</p>
+                                <p class="connect-bio">Passionate about climate action and access to quality education in rural communities.</p>
+                                <button class="connect-btn">Connect</button>
+                            </div>
+                            <div class="connect-card">
+                                <div class="connect-avatar connect-avatar-2"></div>
+                                <h3>James K.</h3>
+                                <p class="connect-causes">Health · Basic Needs</p>
+                                <p class="connect-bio">Long-term donor focused on community health infrastructure and food security programs.</p>
+                                <button class="connect-btn">Connect</button>
+                            </div>
+                            <div class="connect-card">
+                                <div class="connect-avatar connect-avatar-3"></div>
+                                <h3>Sofia R.</h3>
+                                <p class="connect-causes">Children · Human Rights</p>
+                                <p class="connect-bio">Advocate for children's rights and social justice initiatives across Eastern Europe.</p>
+                                <button class="connect-btn">Connect</button>
+                            </div>
+                        </div>
+
+                        <div class="coming-soon-badge">
+                            <span>Full community features coming soon</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- /.main-content-area -->
+        </div><!-- /.dashboard-content -->
+    </div><!-- /.dashboard-wrapper -->
+
     <script src="script.js"></script>
+    <script src="impact.js"></script>
     <script src="dashboard.js"></script>
 </body>
 </html>
