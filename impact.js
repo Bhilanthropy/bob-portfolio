@@ -5,7 +5,7 @@ let _impactFilterTo    = null;
 let _impactUserData    = null;
 
 function getFilteredDonations() {
-    const all = JSON.parse(localStorage.getItem('donations') || '[]');
+    const all = JSON.parse(localStorage.getItem('donations_v2') || '[]');
     if (_impactFilterRange === 'all') return all;
 
     const today = new Date();
@@ -70,8 +70,8 @@ function setupDateFilter() {
 window.initImpactDashboard = function (userData) {
     _impactUserData = userData;
 
-    if (!localStorage.getItem('donations')) {
-        localStorage.setItem('donations', JSON.stringify(generateRealisticDonations()));
+    if (!localStorage.getItem('donations_v2')) {
+        localStorage.setItem('donations_v2', JSON.stringify(generateRealisticDonations()));
     }
 
     const donations = getFilteredDonations();
@@ -93,40 +93,15 @@ function generateRealisticDonations() {
     const donations = [];
     const startDate = new Date();
     startDate.setFullYear(startDate.getFullYear() - 7);
-    startDate.setMonth(startDate.getMonth() - 6);
+    startDate.setDate(1);
 
-    const monthlyAmounts = [
-        15, 15, 20, 15, 15, 10, 15, 20, 15, 15, 15, 20,
-        15, 15, 25, 30, 35, 35, 30, 25, 20, 15, 15, 15,
-        15, 15, 10, 10, 15, 15, 20, 15, 15, 15, 20, 25,
-        15, 15, 15, 20, 25, 30, 35, 30, 25, 20, 15, 15,
-        10, 10, 15, 15, 15, 20, 15, 15, 10, 10, 15, 15,
-        15, 15, 20, 25, 30, 30, 25, 20, 15, 15, 15, 20,
-        15, 15, 15, 20, 15, 15, 15, 20, 25, 30, 20, 15,
-        15, 15, 20, 15, 15, 10
-    ];
-
-    for (let i = 0; i < monthlyAmounts.length; i++) {
+    for (let i = 0; i < 84; i++) {
         const donationDate = new Date(startDate);
         donationDate.setMonth(donationDate.getMonth() + i);
-        donations.push({ amount: monthlyAmounts[i], date: donationDate.toISOString().split('T')[0] });
+        donationDate.setDate(5);
+        donations.push({ amount: 35, date: donationDate.toISOString().split('T')[0] });
     }
 
-    const largerDonations = [
-        { amount: 150, monthOffset: 18 },
-        { amount: 300, monthOffset: 36 },
-        { amount: 450, monthOffset: 60 },
-        { amount: 200, monthOffset: 80 }
-    ];
-
-    largerDonations.forEach(large => {
-        const donationDate = new Date(startDate);
-        donationDate.setMonth(donationDate.getMonth() + large.monthOffset);
-        donationDate.setDate(15);
-        donations.push({ amount: large.amount, date: donationDate.toISOString().split('T')[0] });
-    });
-
-    donations.sort((a, b) => new Date(a.date) - new Date(b.date));
     return donations;
 }
 
@@ -608,9 +583,9 @@ function setupDonationForm() {
             return;
         }
 
-        const donations = JSON.parse(localStorage.getItem('donations') || '[]');
+        const donations = JSON.parse(localStorage.getItem('donations_v2') || '[]');
         donations.push({ amount, date });
-        localStorage.setItem('donations', JSON.stringify(donations));
+        localStorage.setItem('donations_v2', JSON.stringify(donations));
 
         const filtered = getFilteredDonations();
         displayMetrics(filtered);
@@ -637,8 +612,8 @@ function setupResetDemoData() {
     if (!resetBtn) return;
 
     resetBtn.addEventListener('click', function () {
-        if (confirm('Reset to demo data? This will replace your current donation history with 7.5 years of sample data.')) {
-            localStorage.setItem('donations', JSON.stringify(generateRealisticDonations()));
+        if (confirm('Reset to demo data? This will replace your current donation history with 7 years of sample data.')) {
+            localStorage.setItem('donations_v2', JSON.stringify(generateRealisticDonations()));
             location.reload();
         }
     });
@@ -662,7 +637,7 @@ function setupPredictionCalculator() {
             return;
         }
 
-        const donations        = JSON.parse(localStorage.getItem('donations') || '[]');
+        const donations        = JSON.parse(localStorage.getItem('donations_v2') || '[]');
         if (donations.length === 0) {
             showToast('No donation data found. Add donations or reset to demo data first.', 'error');
             return;
