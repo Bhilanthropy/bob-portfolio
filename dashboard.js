@@ -121,14 +121,14 @@ function simpleHash(str) {
 }
 
 // ── Logout ────────────────────────────────────────────────────────────────
+function doLogout() {
+    localStorage.removeItem('user');
+    localStorage.removeItem('isLoggedIn');
+    window.location.href = 'index.html';
+}
+window.doLogout = doLogout;
+
 function setupLogout() {
     const logoutBtn = document.getElementById('logoutBtn');
-    if (!logoutBtn) return;
-
-    logoutBtn.addEventListener('click', function (e) {
-        e.preventDefault();
-        localStorage.removeItem('user');
-        localStorage.removeItem('isLoggedIn');
-        window.location.href = 'index.html';
-    });
+    if (logoutBtn) logoutBtn.addEventListener('click', doLogout);
 }
