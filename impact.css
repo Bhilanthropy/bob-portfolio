@@ -759,9 +759,34 @@
 
 .sim-stats {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1.5rem;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 1rem;
     margin-bottom: 1.5rem;
+}
+
+.sim-chart-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-top: 1.5rem;
+}
+
+.sim-chart-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.sim-chart-title {
+    font-size: 0.9rem;
+    font-weight: 300;
+    letter-spacing: 0.04em;
+    color: var(--text-primary);
+    text-align: center;
+}
+
+.sim-chart-container {
+    height: 320px;
 }
 
 .sim-stat {
@@ -990,7 +1015,11 @@
     }
 
     .sim-stats {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .sim-chart-row {
+        grid-template-columns: 1fr;
     }
 
     .comparison-grid {
@@ -1020,6 +1049,6 @@
     }
 
     .sim-stats {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
     }
 }

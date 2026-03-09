@@ -308,6 +308,10 @@
                                         <span class="sim-stat-value" id="simFinalPortfolio">€0</span>
                                     </div>
                                     <div class="sim-stat">
+                                        <span class="sim-stat-label">Total Invested</span>
+                                        <span class="sim-stat-value" id="simTotalInvested">€0</span>
+                                    </div>
+                                    <div class="sim-stat">
                                         <span class="sim-stat-label">Monthly Dividend</span>
                                         <span class="sim-stat-value" id="simMonthlyDividend">€0</span>
                                     </div>
@@ -315,15 +319,31 @@
                                         <span class="sim-stat-label">To Causes / Month</span>
                                         <span class="sim-stat-value" id="simCausesMonthly">€0</span>
                                     </div>
-                                    <div class="sim-stat" id="simCrossoverStat">
+                                    <div class="sim-stat">
+                                        <span class="sim-stat-label">Total Return</span>
+                                        <span class="sim-stat-value green" id="simReturn">—</span>
+                                    </div>
+                                    <div class="sim-stat">
                                         <span class="sim-stat-label">Crossover Point</span>
                                         <span class="sim-stat-value" id="simCrossover">—</span>
                                     </div>
                                 </div>
-                                <div class="chart-container" style="height: 380px; margin-top: 2rem;">
-                                    <canvas id="predictionChart"></canvas>
+                                <div class="sim-chart-row">
+                                    <div class="sim-chart-panel">
+                                        <p class="sim-chart-title">Invested vs. Portfolio Value</p>
+                                        <div class="chart-container sim-chart-container">
+                                            <canvas id="predictionChart"></canvas>
+                                        </div>
+                                        <p class="chart-note"><span style="color:#E05252">Red</span>: cash invested &nbsp;|&nbsp; <span style="color:#00CED1">Cyan</span>: portfolio value &nbsp;|&nbsp; Shaded area: unrealised gain</p>
+                                    </div>
+                                    <div class="sim-chart-panel">
+                                        <p class="sim-chart-title">Monthly Contribution vs. Dividend Income</p>
+                                        <div class="chart-container sim-chart-container">
+                                            <canvas id="predictionChart2"></canvas>
+                                        </div>
+                                        <p class="chart-note"><span style="color:rgba(255,165,0,0.9)">Orange</span>: monthly input &nbsp;|&nbsp; <span style="color:#32CD32">Green</span>: dividend income &nbsp;|&nbsp; <span style="color:#9370DB">Purple line</span>: crossover</p>
+                                    </div>
                                 </div>
-                                <p class="chart-note">Left axis: portfolio value &nbsp;|&nbsp; Right axis: monthly €/amounts &nbsp;|&nbsp; <span style="color:rgba(255,80,80,0.85)">Red dashed line</span>: crossover point</p>
                             </div>
                         </div>
                     </div>

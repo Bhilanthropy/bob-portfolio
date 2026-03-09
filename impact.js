@@ -653,14 +653,19 @@ function setupPredictionCalculator() {
         }
 
         const { points, crossoverYearIdx, crossoverMonth } = runSimulation(monthly, years);
-        const last = points[points.length - 1];
+        const last        = points[points.length - 1];
+        const totalInvested = monthly * years * 12;
+        const returnPct   = ((last.portfolio - totalInvested) / totalInvested * 100).toFixed(0);
 
         document.getElementById('simFinalPortfolio').textContent =
             `€${Math.round(last.portfolio).toLocaleString()}`;
+        document.getElementById('simTotalInvested').textContent =
+            `€${Math.round(totalInvested).toLocaleString()}`;
         document.getElementById('simMonthlyDividend').textContent =
             `€${last.monthlyDiv.toFixed(2)}`;
         document.getElementById('simCausesMonthly').textContent =
             `€${last.causesAmt.toFixed(2)}`;
+        document.getElementById('simReturn').textContent = `+${returnPct}%`;
 
         if (crossoverMonth > 0) {
             const yr  = Math.ceil(crossoverMonth / 12);
@@ -674,7 +679,8 @@ function setupPredictionCalculator() {
         }
 
         document.getElementById('simResults').style.display = 'block';
-        displayPredictionChart(points, monthly, crossoverYearIdx);
+        displayInvestedVsPortfolioChart(points, monthly, years);
+        displayDividendCrossoverChart(points, monthly, crossoverYearIdx);
         document.getElementById('simResults').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
 }
@@ -715,16 +721,89 @@ function runSimulation(monthly, years) {
     return { points: yearlyPoints, crossoverYearIdx, crossoverMonth };
 }
 
-function displayPredictionChart(points, monthly, crossoverYearIdx) {
+// Chart 1 — Cash invested (red) vs Portfolio value (cyan) with shaded gain
+function displayInvestedVsPortfolioChart(points, monthly, years) {
     const ctx = document.getElementById('predictionChart');
     if (!ctx) return;
+    const existing = Chart.getChart(ctx);
+    if (existing) existing.destroy();
 
+    const labels   = points.map(p => `Year ${p.year}`);
+    const invested  = points.map(p => Math.round(p.year * 12 * monthly));
+    const portfolio = points.map(p => Math.round(p.portfolio));
+
+    const commonOpts = {
+        responsive:          true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: true, position: 'top',
+                labels: {
+                    color: '#F5F1E8', usePointStyle: true, padding: 15,
+                    font: { size: 12, family: "'IBM Plex Sans', sans-serif" }
+                }
+            },
+            tooltip: {
+                mode: 'index', intersect: false,
+                backgroundColor: 'rgba(26, 18, 32, 0.9)',
+                titleColor: '#F5F1E8', bodyColor: '#F5F1E8',
+                borderColor: 'rgba(245, 241, 232, 0.2)', borderWidth: 1, padding: 12,
+                callbacks: { label: c => c.dataset.label + ': €' + c.parsed.y.toLocaleString() }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: { color: '#A89E8C', callback: v => '€' + v.toLocaleString() },
+                grid:  { color: 'rgba(245, 241, 232, 0.1)' }
+            },
+            x: {
+                ticks: { color: '#A89E8C' },
+                grid:  { color: 'rgba(245, 241, 232, 0.05)' }
+            }
+        }
+    };
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [
+                {
+                    label:           'Cash Invested',
+                    data:            invested,
+                    borderColor:     '#E05252',
+                    backgroundColor: 'rgba(224, 82, 82, 0)',
+                    borderWidth:     2,
+                    tension:         0,
+                    fill:            false,
+                    pointRadius:     3
+                },
+                {
+                    label:           'Portfolio Value',
+                    data:            portfolio,
+                    borderColor:     '#00CED1',
+                    backgroundColor: 'rgba(0, 206, 209, 0.15)',
+                    borderWidth:     3,
+                    tension:         0.4,
+                    fill:            '-1',   // shade gap down to "Cash Invested" line
+                    pointRadius:     3
+                }
+            ]
+        },
+        options: commonOpts
+    });
+}
+
+// Chart 2 — Monthly dividend (green) vs flat monthly input (orange) with purple crossover line
+function displayDividendCrossoverChart(points, monthly, crossoverYearIdx) {
+    const ctx = document.getElementById('predictionChart2');
+    if (!ctx) return;
     const existing = Chart.getChart(ctx);
     if (existing) existing.destroy();
 
     const labels = points.map(p => `Year ${p.year}`);
 
-    // Inline plugin: draws the red dashed vertical line at crossover
     const crossoverPlugin = {
         id: 'crossoverLine',
         afterDraw(chart) {
@@ -735,13 +814,13 @@ function displayPredictionChart(points, monthly, crossoverYearIdx) {
             c.beginPath();
             c.moveTo(x, chartArea.top);
             c.lineTo(x, chartArea.bottom);
-            c.strokeStyle = 'rgba(255, 80, 80, 0.85)';
+            c.strokeStyle = 'rgba(147, 112, 219, 0.9)';
             c.lineWidth   = 2;
             c.setLineDash([6, 4]);
             c.stroke();
-            c.fillStyle  = 'rgba(255, 80, 80, 0.9)';
-            c.font       = `11px 'IBM Plex Sans', sans-serif`;
-            c.textAlign  = 'left';
+            c.fillStyle = 'rgba(147, 112, 219, 0.9)';
+            c.font      = `11px 'IBM Plex Sans', sans-serif`;
+            c.textAlign = 'left';
             c.fillText('Crossover', x + 6, chartArea.top + 16);
             c.restore();
         }
@@ -753,45 +832,24 @@ function displayPredictionChart(points, monthly, crossoverYearIdx) {
             labels,
             datasets: [
                 {
-                    label:           'Portfolio Value',
-                    data:            points.map(p => p.portfolio),
-                    borderColor:     '#228B22',
-                    backgroundColor: 'rgba(34, 139, 34, 0.08)',
-                    borderWidth:     3,
-                    tension:         0.4,
-                    fill:            false,
-                    yAxisID:         'y'
-                },
-                {
-                    label:           'Monthly Dividend Income',
-                    data:            points.map(p => p.monthlyDiv),
-                    borderColor:     '#4169E1',
-                    backgroundColor: 'rgba(65, 105, 225, 0.05)',
-                    borderWidth:     2,
-                    tension:         0.4,
-                    fill:            false,
-                    yAxisID:         'y2'
-                },
-                {
-                    label:           '40% of Dividend (to Causes)',
-                    data:            points.map(p => p.causesAmt),
-                    borderColor:     '#9370DB',
-                    backgroundColor: 'rgba(147, 112, 219, 0.05)',
-                    borderWidth:     2,
-                    tension:         0.4,
-                    fill:            false,
-                    yAxisID:         'y2'
-                },
-                {
                     label:       `Monthly Investment (€${monthly})`,
                     data:        points.map(() => monthly),
-                    borderColor: 'rgba(255, 215, 0, 0.85)',
+                    borderColor: 'rgba(255, 165, 0, 0.9)',
                     borderWidth: 2,
                     borderDash:  [8, 4],
                     tension:     0,
                     fill:        false,
-                    pointRadius: 0,
-                    yAxisID:     'y2'
+                    pointRadius: 0
+                },
+                {
+                    label:           'Monthly Dividend Income',
+                    data:            points.map(p => p.monthlyDiv),
+                    borderColor:     '#32CD32',
+                    backgroundColor: 'rgba(50, 205, 50, 0.08)',
+                    borderWidth:     3,
+                    tension:         0.4,
+                    fill:            false,
+                    pointRadius:     3
                 }
             ]
         },
@@ -800,57 +858,25 @@ function displayPredictionChart(points, monthly, crossoverYearIdx) {
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    display:  true,
-                    position: 'top',
+                    display: true, position: 'top',
                     labels: {
-                        color:         '#F5F1E8',
-                        usePointStyle: true,
-                        padding:       15,
+                        color: '#F5F1E8', usePointStyle: true, padding: 15,
                         font: { size: 12, family: "'IBM Plex Sans', sans-serif" }
-                    },
-                    onClick: function (e, legendItem, legend) {
-                        const meta = legend.chart.getDatasetMeta(legendItem.datasetIndex);
-                        meta.hidden = !meta.hidden;
-                        legend.chart.update();
                     }
                 },
                 tooltip: {
-                    mode:            'index',
-                    intersect:       false,
+                    mode: 'index', intersect: false,
                     backgroundColor: 'rgba(26, 18, 32, 0.9)',
-                    titleColor:      '#F5F1E8',
-                    bodyColor:       '#F5F1E8',
-                    borderColor:     'rgba(245, 241, 232, 0.2)',
-                    borderWidth:     1,
-                    padding:         12,
-                    callbacks: {
-                        label: ctx => {
-                            const v = ctx.parsed.y;
-                            return ctx.dataset.yAxisID === 'y'
-                                ? ctx.dataset.label + ': €' + Math.round(v).toLocaleString()
-                                : ctx.dataset.label + ': €' + v.toFixed(2);
-                        }
-                    }
+                    titleColor: '#F5F1E8', bodyColor: '#F5F1E8',
+                    borderColor: 'rgba(245, 241, 232, 0.2)', borderWidth: 1, padding: 12,
+                    callbacks: { label: c => c.dataset.label + ': €' + c.parsed.y.toFixed(2) }
                 }
             },
             scales: {
                 y: {
-                    position:    'left',
-                    beginAtZero: true,
-                    ticks: { color: '#A89E8C', callback: v => '€' + v.toLocaleString() },
-                    grid:  { color: 'rgba(245, 241, 232, 0.1)' }
-                },
-                y2: {
-                    position:    'right',
                     beginAtZero: true,
                     ticks: { color: '#A89E8C', callback: v => '€' + v.toFixed(0) },
-                    grid:  { drawOnChartArea: false },
-                    title: {
-                        display: true,
-                        text:    'Monthly (€)',
-                        color:   '#A89E8C',
-                        font:    { size: 11, family: "'IBM Plex Sans', sans-serif" }
-                    }
+                    grid:  { color: 'rgba(245, 241, 232, 0.1)' }
                 },
                 x: {
                     ticks: { color: '#A89E8C' },
