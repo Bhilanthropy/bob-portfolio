@@ -88,29 +88,6 @@ window.initImpactDashboard = function (userData) {
     setupDateFilter();
 };
 
-// ── Auto-init for standalone impact.html ─────────────────────────────────
-document.addEventListener('DOMContentLoaded', function () {
-    // Skip if running inside the dashboard SPA (dashboard.js handles init)
-    if (document.querySelector('.content-tabs')) return;
-
-    const isLoggedIn = localStorage.getItem('isLoggedIn');
-    if (!isLoggedIn) {
-        window.location.href = 'index.html';
-        return;
-    }
-
-    const userData = JSON.parse(localStorage.getItem('user'));
-    if (userData && window.initImpactDashboard) {
-        window.initImpactDashboard(userData);
-    }
-
-    document.getElementById('logoutBtn')?.addEventListener('click', function (e) {
-        e.preventDefault();
-        localStorage.removeItem('isLoggedIn');
-        window.location.href = 'index.html';
-    });
-});
-
 // ── Demo data generator ───────────────────────────────────────────────────
 function generateRealisticDonations() {
     const donations = [];
