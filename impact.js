@@ -127,9 +127,10 @@ function showToast(message, type = 'success') {
 
 // ── Core calculation ──────────────────────────────────────────────────────
 function calculateCompounding(donations) {
-    const ANNUAL_DIVIDEND_RATE = 0.05;
-    const REINVEST_RATE        = 0.50;
-    const CAUSES_RATE          = 0.40;
+    const ANNUAL_DIVIDEND_RATE  = 0.05;
+    const REINVEST_RATE         = 0.50;
+    const CAUSES_RATE           = 0.40;
+    const ANNUAL_MARKET_RETURN  = 0.09; // S&P 500 price appreciation (excl. dividends)
 
     const sortedDonations = [...donations].sort((a, b) => new Date(a.date) - new Date(b.date));
 
@@ -164,17 +165,19 @@ function calculateCompounding(donations) {
             }
         }
 
-        const monthlyDividend = portfolioValue * (ANNUAL_DIVIDEND_RATE / 12);
-        const reinvestAmount  = monthlyDividend * REINVEST_RATE;
-        portfolioValue        += reinvestAmount;
-        cumulativeDividends   += monthlyDividend;
+        const monthlyDividend     = portfolioValue * (ANNUAL_DIVIDEND_RATE / 12);
+        const reinvestAmount      = monthlyDividend * REINVEST_RATE;
+        const monthlyAppreciation = portfolioValue * (ANNUAL_MARKET_RETURN / 12);
+        portfolioValue            += reinvestAmount + monthlyAppreciation;
+        cumulativeDividends       += monthlyDividend;
 
         dataPoints.push({
-            date:      monthStr,
-            year:      yearStr,
-            donations: Math.round(cumulativeDonations * 100) / 100,
-            dividends: Math.round(cumulativeDividends * 100) / 100,
-            portfolio: Math.round(portfolioValue * 100)      / 100
+            date:        monthStr,
+            year:        yearStr,
+            donations:   Math.round(cumulativeDonations * 100) / 100,
+            dividends:   Math.round(cumulativeDividends * 100) / 100,
+            portfolio:   Math.round(portfolioValue * 100)      / 100,
+            annualYield: Math.round(portfolioValue * ANNUAL_DIVIDEND_RATE * 100) / 100
         });
 
         currentDate.setMonth(currentDate.getMonth() + 1);
@@ -317,40 +320,95 @@ function displayChart(donations) {
         ? prepareMonthlyData(metrics.dataPoints)
         : prepareYearlyData(metrics.dataPoints);
 
+    const isYearly = currentChartView === 'yearly';
+
+    const datasets = [
+        {
+            label:           'Cumulative Donations',
+            data:            chartData.donations,
+            borderColor:     '#E89C5C',
+            backgroundColor: 'rgba(232, 156, 92, 0.1)',
+            borderWidth:     3,
+            tension:         0.4,
+            fill:            false,
+            yAxisID:         'y'
+        },
+        {
+            label:           'Cumulative Dividends',
+            data:            chartData.dividends,
+            borderColor:     '#4169E1',
+            backgroundColor: 'rgba(65, 105, 225, 0.1)',
+            borderWidth:     3,
+            tension:         0.4,
+            fill:            false,
+            yAxisID:         'y'
+        },
+        {
+            label:           'Portfolio Value (incl. market growth)',
+            data:            chartData.portfolio,
+            borderColor:     '#228B22',
+            backgroundColor: 'rgba(34, 139, 34, 0.1)',
+            borderWidth:     3,
+            tension:         0.4,
+            fill:            false,
+            yAxisID:         'y'
+        }
+    ];
+
+    if (isYearly) {
+        datasets.push({
+            label:           'Annual Dividend Income',
+            data:            chartData.annualYield,
+            borderColor:     '#9370DB',
+            backgroundColor: 'rgba(147, 112, 219, 0.05)',
+            borderWidth:     2,
+            tension:         0.4,
+            fill:            false,
+            yAxisID:         'y2'
+        });
+        datasets.push({
+            label:       'Annual Contribution (€420/yr)',
+            data:        chartData.labels.map(() => 420),
+            borderColor: 'rgba(255, 215, 0, 0.85)',
+            borderWidth: 2,
+            borderDash:  [8, 4],
+            tension:     0,
+            fill:        false,
+            pointRadius: 0,
+            yAxisID:     'y2'
+        });
+    }
+
+    const scales = {
+        y: {
+            beginAtZero: true,
+            ticks: { color: '#A89E8C', callback: value => '€' + value.toLocaleString() },
+            grid:  { color: 'rgba(245, 241, 232, 0.1)' }
+        },
+        x: {
+            ticks: { color: '#A89E8C', maxRotation: 45, minRotation: 45 },
+            grid:  { color: 'rgba(245, 241, 232, 0.05)' }
+        }
+    };
+
+    if (isYearly) {
+        scales.y2 = {
+            position:    'right',
+            beginAtZero: true,
+            title: {
+                display: true,
+                text:    'Annual Dividend Income (€)',
+                color:   '#A89E8C',
+                font:    { size: 11, family: "'IBM Plex Sans', sans-serif" }
+            },
+            ticks: { color: '#A89E8C', callback: value => '€' + value.toLocaleString() },
+            grid:  { drawOnChartArea: false }
+        };
+    }
+
     currentChartInstance = new Chart(ctx, {
         type: 'line',
-        data: {
-            labels: chartData.labels,
-            datasets: [
-                {
-                    label:           'Cumulative Donations',
-                    data:            chartData.donations,
-                    borderColor:     '#E89C5C',
-                    backgroundColor: 'rgba(232, 156, 92, 0.1)',
-                    borderWidth:     3,
-                    tension:         0.4,
-                    fill:            false
-                },
-                {
-                    label:           'Cumulative Dividends',
-                    data:            chartData.dividends,
-                    borderColor:     '#4169E1',
-                    backgroundColor: 'rgba(65, 105, 225, 0.1)',
-                    borderWidth:     3,
-                    tension:         0.4,
-                    fill:            false
-                },
-                {
-                    label:           'Portfolio Value',
-                    data:            chartData.portfolio,
-                    borderColor:     '#228B22',
-                    backgroundColor: 'rgba(34, 139, 34, 0.1)',
-                    borderWidth:     3,
-                    tension:         0.4,
-                    fill:            false
-                }
-            ]
-        },
+        data: { labels: chartData.labels, datasets },
         options: {
             responsive:          true,
             maintainAspectRatio: false,
@@ -359,9 +417,9 @@ function displayChart(donations) {
                     display:  true,
                     position: 'top',
                     labels: {
-                        color:          '#F5F1E8',
-                        usePointStyle:  true,
-                        padding:        15,
+                        color:         '#F5F1E8',
+                        usePointStyle: true,
+                        padding:       15,
                         font: { size: 12, family: "'IBM Plex Sans', sans-serif" }
                     },
                     onClick: function (e, legendItem, legend) {
@@ -384,20 +442,7 @@ function displayChart(donations) {
                     }
                 }
             },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        color:    '#A89E8C',
-                        callback: value => '€' + value.toLocaleString()
-                    },
-                    grid: { color: 'rgba(245, 241, 232, 0.1)' }
-                },
-                x: {
-                    ticks: { color: '#A89E8C', maxRotation: 45, minRotation: 45 },
-                    grid:  { color: 'rgba(245, 241, 232, 0.05)' }
-                }
-            },
+            scales,
             interaction: { mode: 'nearest', axis: 'x', intersect: false }
         }
     });
@@ -407,10 +452,11 @@ function displayChart(donations) {
 
 function prepareMonthlyData(dataPoints) {
     return {
-        labels:    dataPoints.map(d => d.date),
-        donations: dataPoints.map(d => d.donations),
-        dividends: dataPoints.map(d => d.dividends),
-        portfolio: dataPoints.map(d => d.portfolio)
+        labels:      dataPoints.map(d => d.date),
+        donations:   dataPoints.map(d => d.donations),
+        dividends:   dataPoints.map(d => d.dividends),
+        portfolio:   dataPoints.map(d => d.portfolio),
+        annualYield: dataPoints.map(d => d.annualYield)
     };
 }
 
@@ -423,10 +469,11 @@ function prepareYearlyData(dataPoints) {
     });
     const years = Object.keys(yearlyData).sort();
     return {
-        labels:    years,
-        donations: years.map(y => yearlyData[y].donations),
-        dividends: years.map(y => yearlyData[y].dividends),
-        portfolio: years.map(y => yearlyData[y].portfolio)
+        labels:      years,
+        donations:   years.map(y => yearlyData[y].donations),
+        dividends:   years.map(y => yearlyData[y].dividends),
+        portfolio:   years.map(y => yearlyData[y].portfolio),
+        annualYield: years.map(y => yearlyData[y].annualYield)
     };
 }
 
@@ -680,6 +727,7 @@ function setupPredictionCalculator() {
 function projectFuture(currentPortfolio, monthlyDonation, years) {
     const ANNUAL_DIVIDEND_RATE = 0.05;
     const REINVEST_RATE        = 0.50;
+    const ANNUAL_MARKET_RETURN = 0.09;
 
     const dataPoints  = [];
     let portfolioValue = currentPortfolio;
@@ -689,6 +737,7 @@ function projectFuture(currentPortfolio, monthlyDonation, years) {
         portfolioValue += monthlyDonation;
         const monthlyDividend = portfolioValue * (ANNUAL_DIVIDEND_RATE / 12);
         portfolioValue       += monthlyDividend * REINVEST_RATE;
+        portfolioValue       += portfolioValue * (ANNUAL_MARKET_RETURN / 12);
 
         if (month % 3 === 0) {
             dataPoints.push({ month, portfolio: Math.round(portfolioValue * 100) / 100 });
