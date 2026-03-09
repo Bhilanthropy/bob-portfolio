@@ -198,14 +198,18 @@ function calculateCompounding(donations) {
 function displayMetrics(donations) {
     const metrics = calculateCompounding(donations);
 
-    document.getElementById('totalDonated').textContent   = `€${metrics.totalDonated.toLocaleString()}`;
-    document.getElementById('portfolioValue').textContent = `€${metrics.portfolioValue.toLocaleString()}`;
+    const totalDonatedEl  = document.getElementById('totalDonated');
+    const portfolioValueEl = document.getElementById('portfolioValue');
+    if (totalDonatedEl)  totalDonatedEl.textContent  = `€${metrics.totalDonated.toLocaleString()}`;
+    if (portfolioValueEl) portfolioValueEl.textContent = `€${metrics.portfolioValue.toLocaleString()}`;
 
     const growthPercent = metrics.totalDonated > 0
         ? ((metrics.portfolioValue - metrics.totalDonated) / metrics.totalDonated * 100).toFixed(1)
         : 0;
-    document.getElementById('portfolioGrowth').textContent = `+${growthPercent}% growth`;
-    document.getElementById('annualImpact').textContent    = `€${metrics.annualImpact.toLocaleString()}`;
+    const portfolioGrowthEl = document.getElementById('portfolioGrowth');
+    const annualImpactEl    = document.getElementById('annualImpact');
+    if (portfolioGrowthEl) portfolioGrowthEl.textContent = `+${growthPercent}% growth`;
+    if (annualImpactEl)    annualImpactEl.textContent    = `€${metrics.annualImpact.toLocaleString()}`;
 
     const monthlyAvg     = calculateMonthlyAverage(donations);
     const monthlyElement = document.getElementById('monthlyDonations');
