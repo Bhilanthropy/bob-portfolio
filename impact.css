@@ -945,6 +945,110 @@
     border-left: 3px solid #E8555C;
 }
 
+/* ── Consistency Notice ────────────────────────────────────────────────── */
+.consistency-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    background: rgba(232, 156, 92, 0.08);
+    border: 1px solid rgba(232, 156, 92, 0.25);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.consistency-icon {
+    width: 22px;
+    height: 22px;
+    color: var(--golden-orange);
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+}
+
+.consistency-notice p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin: 0;
+}
+
+.consistency-notice strong {
+    color: var(--text-primary);
+}
+
+/* ── How It Works Card ─────────────────────────────────────────────────── */
+.how-it-works-card {
+    background: rgba(245, 241, 232, 0.03);
+    border: 1px solid rgba(245, 241, 232, 0.1);
+    border-radius: 16px;
+    padding: 2rem 2.5rem;
+    margin-bottom: 3rem;
+}
+
+.how-it-works-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.4rem;
+    font-weight: 300;
+    color: var(--text-primary);
+    margin-bottom: 1.75rem;
+}
+
+.how-steps {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.how-step {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.how-step-num {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(232, 156, 92, 0.15);
+    border: 1px solid rgba(232, 156, 92, 0.35);
+    color: var(--golden-orange);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.how-step-body strong {
+    display: block;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    margin-bottom: 0.4rem;
+}
+
+.how-step-body p {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin: 0;
+}
+
+.how-arrow {
+    font-size: 1.4rem;
+    color: rgba(245, 241, 232, 0.2);
+    padding-top: 0.4rem;
+    flex-shrink: 0;
+}
+
+.how-split {
+    font-weight: 400;
+}
+.how-split.reinvest { color: #32CD32; }
+.how-split.causes   { color: var(--golden-orange); }
+.how-split.ops      { color: #A89E8C; }
+
 /* Responsive */
 @media (max-width: 768px) {
     .impact-content {
@@ -983,6 +1087,20 @@
     .view-toggle {
         width: 100%;
         justify-content: center;
+    }
+
+    .how-steps {
+        flex-direction: column;
+    }
+
+    .how-arrow {
+        transform: rotate(90deg);
+        align-self: center;
+        padding-top: 0;
+    }
+
+    .how-it-works-card {
+        padding: 1.5rem;
     }
 
     .breakdown-grid {

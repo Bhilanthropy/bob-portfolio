@@ -247,7 +247,7 @@ function calculateMonthlyAverage(donations) {
 }
 
 function displayCumulativeSpending(metrics) {
-    const totalDividendsPaid = metrics.portfolioValue - metrics.totalDonated;
+    const totalDividendsPaid = metrics.totalDividends;
     const totalReinvested    = totalDividendsPaid * 0.50;
     const totalToCauses      = totalDividendsPaid * 0.40;
     const totalMaintenance   = totalDividendsPaid * 0.10;
@@ -280,7 +280,7 @@ function displayAllocationChart() {
     allocationChartInstance = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: ['Reinvested (50%)', 'Your Causes (40%)', 'Maintenance (10%)'],
+            labels: ['Reinvested (50%)', 'Your Causes (40%)', 'Foundation Operations (10%)'],
             datasets: [{
                 data:            [50, 40, 10],
                 backgroundColor: ['#32CD32', '#E89C5C', '#696969'],
