@@ -175,9 +175,8 @@ function calculateCompounding(donations) {
             date:        monthStr,
             year:        yearStr,
             donations:   Math.round(cumulativeDonations * 100) / 100,
-            dividends:   Math.round(cumulativeDividends * 100) / 100,
             portfolio:   Math.round(portfolioValue * 100)      / 100,
-            annualYield: Math.round(portfolioValue * ANNUAL_DIVIDEND_RATE * 100) / 100
+            causesYield: Math.round(cumulativeDividends * CAUSES_RATE * 100) / 100
         });
 
         currentDate.setMonth(currentDate.getMonth() + 1);
@@ -199,14 +198,18 @@ function calculateCompounding(donations) {
 function displayMetrics(donations) {
     const metrics = calculateCompounding(donations);
 
-    document.getElementById('totalDonated').textContent   = `€${metrics.totalDonated.toLocaleString()}`;
-    document.getElementById('portfolioValue').textContent = `€${metrics.portfolioValue.toLocaleString()}`;
+    const totalDonatedEl  = document.getElementById('totalDonated');
+    const portfolioValueEl = document.getElementById('portfolioValue');
+    if (totalDonatedEl)  totalDonatedEl.textContent  = `€${metrics.totalDonated.toLocaleString()}`;
+    if (portfolioValueEl) portfolioValueEl.textContent = `€${metrics.portfolioValue.toLocaleString()}`;
 
     const growthPercent = metrics.totalDonated > 0
         ? ((metrics.portfolioValue - metrics.totalDonated) / metrics.totalDonated * 100).toFixed(1)
         : 0;
-    document.getElementById('portfolioGrowth').textContent = `+${growthPercent}% growth`;
-    document.getElementById('annualImpact').textContent    = `€${metrics.annualImpact.toLocaleString()}`;
+    const portfolioGrowthEl = document.getElementById('portfolioGrowth');
+    const annualImpactEl    = document.getElementById('annualImpact');
+    if (portfolioGrowthEl) portfolioGrowthEl.textContent = `+${growthPercent}% growth`;
+    if (annualImpactEl)    annualImpactEl.textContent    = `€${metrics.annualImpact.toLocaleString()}`;
 
     const monthlyAvg     = calculateMonthlyAverage(donations);
     const monthlyElement = document.getElementById('monthlyDonations');
@@ -244,7 +247,7 @@ function calculateMonthlyAverage(donations) {
 }
 
 function displayCumulativeSpending(metrics) {
-    const totalDividendsPaid = metrics.portfolioValue - metrics.totalDonated;
+    const totalDividendsPaid = metrics.totalDividends;
     const totalReinvested    = totalDividendsPaid * 0.50;
     const totalToCauses      = totalDividendsPaid * 0.40;
     const totalMaintenance   = totalDividendsPaid * 0.10;
@@ -277,7 +280,7 @@ function displayAllocationChart() {
     allocationChartInstance = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: ['Reinvested (50%)', 'Your Causes (40%)', 'Maintenance (10%)'],
+            labels: ['Reinvested (50%)', 'Your Causes (40%)', 'Foundation Operations (10%)'],
             datasets: [{
                 data:            [50, 40, 10],
                 backgroundColor: ['#32CD32', '#E89C5C', '#696969'],
@@ -321,6 +324,7 @@ function displayChart(donations) {
         : prepareYearlyData(metrics.dataPoints);
 
     const isYearly = currentChartView === 'yearly';
+    const avgLabel = isYearly ? 'Avg. Contribution (€450/yr)' : 'Avg. Contribution (€37.50/mo)';
 
     const datasets = [
         {
@@ -334,17 +338,7 @@ function displayChart(donations) {
             yAxisID:         'y'
         },
         {
-            label:           'Cumulative Dividends',
-            data:            chartData.dividends,
-            borderColor:     '#4169E1',
-            backgroundColor: 'rgba(65, 105, 225, 0.1)',
-            borderWidth:     3,
-            tension:         0.4,
-            fill:            false,
-            yAxisID:         'y'
-        },
-        {
-            label:           'Portfolio Value (incl. market growth)',
+            label:           'Portfolio Value (50% reinvested + market growth)',
             data:            chartData.portfolio,
             borderColor:     '#228B22',
             backgroundColor: 'rgba(34, 139, 34, 0.1)',
@@ -352,32 +346,29 @@ function displayChart(donations) {
             tension:         0.4,
             fill:            false,
             yAxisID:         'y'
-        }
-    ];
-
-    if (isYearly) {
-        datasets.push({
-            label:           'Annual Dividend Income',
-            data:            chartData.annualYield,
-            borderColor:     '#9370DB',
-            backgroundColor: 'rgba(147, 112, 219, 0.05)',
-            borderWidth:     2,
-            tension:         0.4,
-            fill:            false,
-            yAxisID:         'y2'
-        });
-        datasets.push({
-            label:       'Annual Contribution (€420/yr)',
-            data:        chartData.labels.map(() => 420),
+        },
+        {
+            label:       avgLabel,
+            data:        chartData.avgContribution,
             borderColor: 'rgba(255, 215, 0, 0.85)',
             borderWidth: 2,
             borderDash:  [8, 4],
             tension:     0,
             fill:        false,
             pointRadius: 0,
-            yAxisID:     'y2'
-        });
-    }
+            yAxisID:     'y'
+        },
+        {
+            label:           'Donations to Causes (40% of dividends)',
+            data:            chartData.causesYield,
+            borderColor:     '#9370DB',
+            backgroundColor: 'rgba(147, 112, 219, 0.05)',
+            borderWidth:     2,
+            tension:         0.4,
+            fill:            false,
+            yAxisID:         'y'
+        }
+    ];
 
     const scales = {
         y: {
@@ -390,21 +381,6 @@ function displayChart(donations) {
             grid:  { color: 'rgba(245, 241, 232, 0.05)' }
         }
     };
-
-    if (isYearly) {
-        scales.y2 = {
-            position:    'right',
-            beginAtZero: true,
-            title: {
-                display: true,
-                text:    'Annual Dividend Income (€)',
-                color:   '#A89E8C',
-                font:    { size: 11, family: "'IBM Plex Sans', sans-serif" }
-            },
-            ticks: { color: '#A89E8C', callback: value => '€' + value.toLocaleString() },
-            grid:  { drawOnChartArea: false }
-        };
-    }
 
     currentChartInstance = new Chart(ctx, {
         type: 'line',
@@ -452,11 +428,11 @@ function displayChart(donations) {
 
 function prepareMonthlyData(dataPoints) {
     return {
-        labels:      dataPoints.map(d => d.date),
-        donations:   dataPoints.map(d => d.donations),
-        dividends:   dataPoints.map(d => d.dividends),
-        portfolio:   dataPoints.map(d => d.portfolio),
-        annualYield: dataPoints.map(d => d.annualYield)
+        labels:          dataPoints.map(d => d.date),
+        donations:       dataPoints.map(d => d.donations),
+        portfolio:       dataPoints.map(d => d.portfolio),
+        causesYield:     dataPoints.map(d => d.causesYield),
+        avgContribution: dataPoints.map((_, i) => Math.round((i + 1) * (450 / 12) * 100) / 100)
     };
 }
 
@@ -469,11 +445,11 @@ function prepareYearlyData(dataPoints) {
     });
     const years = Object.keys(yearlyData).sort();
     return {
-        labels:      years,
-        donations:   years.map(y => yearlyData[y].donations),
-        dividends:   years.map(y => yearlyData[y].dividends),
-        portfolio:   years.map(y => yearlyData[y].portfolio),
-        annualYield: years.map(y => yearlyData[y].annualYield)
+        labels:          years,
+        donations:       years.map(y => yearlyData[y].donations),
+        portfolio:       years.map(y => yearlyData[y].portfolio),
+        causesYield:     years.map(y => yearlyData[y].causesYield),
+        avgContribution: years.map((_, i) => (i + 1) * 450)
     };
 }
 
@@ -666,116 +642,218 @@ function setupResetDemoData() {
     });
 }
 
-// ── Prediction calculator ─────────────────────────────────────────────────
+// ── Investment simulator ───────────────────────────────────────────────────
 function setupPredictionCalculator() {
-    const calcButton = document.getElementById('calculatePrediction');
-    if (!calcButton) return;
+    const btn = document.getElementById('runSimulation');
+    if (!btn) return;
 
-    calcButton.addEventListener('click', function () {
-        const newMonthlyInput = document.getElementById('newMonthlyAmount');
-        const yearsInput      = document.getElementById('projectionYears');
-        if (!newMonthlyInput || !yearsInput) return;
+    btn.addEventListener('click', function () {
+        const monthly = parseFloat(document.getElementById('simMonthly')?.value);
+        const years   = parseInt(document.getElementById('simYears')?.value);
 
-        const newMonthly = parseFloat(newMonthlyInput.value);
-        const years      = parseInt(yearsInput.value);
-
-        if (!newMonthly || !years || newMonthly <= 0 || years <= 0) {
-            showToast('Please enter a valid monthly amount and projection years', 'error');
+        if (!monthly || !years || monthly <= 0 || years <= 0) {
+            showToast('Please enter a valid monthly amount and period', 'error');
             return;
         }
 
-        const donations        = JSON.parse(localStorage.getItem('donations_v2') || '[]');
-        if (donations.length === 0) {
-            showToast('No donation data found. Add donations or reset to demo data first.', 'error');
-            return;
+        const { points, crossoverYearIdx, crossoverMonth } = runSimulation(monthly, years);
+        const last        = points[points.length - 1];
+        const totalInvested = monthly * years * 12;
+        const returnPct   = ((last.portfolio - totalInvested) / totalInvested * 100).toFixed(0);
+
+        document.getElementById('simFinalPortfolio').textContent =
+            `€${Math.round(last.portfolio).toLocaleString()}`;
+        document.getElementById('simTotalInvested').textContent =
+            `€${Math.round(totalInvested).toLocaleString()}`;
+        document.getElementById('simMonthlyDividend').textContent =
+            `€${last.monthlyDiv.toFixed(2)}`;
+        document.getElementById('simCausesMonthly').textContent =
+            `€${last.causesAmt.toFixed(2)}`;
+        document.getElementById('simReturn').textContent = `+${returnPct}%`;
+
+        if (crossoverMonth > 0) {
+            const yr  = Math.ceil(crossoverMonth / 12);
+            const mo  = crossoverMonth % 12 || 12;
+            document.getElementById('simCrossover').textContent =
+                `Year ${yr}, Month ${mo}`;
+            document.getElementById('simCrossover').style.color = '#32CD32';
+        } else {
+            document.getElementById('simCrossover').textContent = 'Not reached';
+            document.getElementById('simCrossover').style.color = '#A89E8C';
         }
 
-        const currentMetrics  = calculateCompounding(donations);
-        const currentMonthly  = calculateMonthlyAverage(donations);
-
-        if (currentMonthly === 0) {
-            showToast('No donations in the last 12 months to calculate an average from.', 'error');
-            return;
-        }
-
-        const currentProjection = projectFuture(currentMetrics.portfolioValue, currentMonthly, years);
-        const newProjection     = projectFuture(currentMetrics.portfolioValue, newMonthly, years);
-
-        displayPredictionChart(currentProjection, newProjection, currentMonthly, newMonthly);
-        document.getElementById('predictionResults').style.display = 'block';
-
-        const currentFutureValue  = currentProjection[currentProjection.length - 1].portfolio;
-        const newFutureValue      = newProjection[newProjection.length - 1].portfolio;
-        const currentFutureImpact = currentFutureValue * 0.05 * 0.40;
-        const newFutureImpact     = newFutureValue     * 0.05 * 0.40;
-
-        document.getElementById('currentScenarioValue').textContent  = `€${Math.round(currentFutureValue).toLocaleString()}`;
-        document.getElementById('currentScenarioImpact').textContent = `€${Math.round(currentFutureImpact).toLocaleString()}`;
-        document.getElementById('newScenarioValue').textContent      = `€${Math.round(newFutureValue).toLocaleString()}`;
-        document.getElementById('newScenarioImpact').textContent     = `€${Math.round(newFutureImpact).toLocaleString()}`;
-
-        const valueDiff  = newFutureValue  - currentFutureValue;
-        const impactDiff = newFutureImpact - currentFutureImpact;
-
-        document.getElementById('valueDifference').textContent  = `${valueDiff  >= 0 ? '+' : ''}€${Math.round(valueDiff).toLocaleString()}`;
-        document.getElementById('impactDifference').textContent = `${impactDiff >= 0 ? '+' : ''}€${Math.round(impactDiff).toLocaleString()}`;
-
-        document.getElementById('predictionResults').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        document.getElementById('simResults').style.display = 'block';
+        displayInvestedVsPortfolioChart(points, monthly, years);
+        displayDividendCrossoverChart(points, monthly, crossoverYearIdx);
+        document.getElementById('simResults').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
 }
 
-function projectFuture(currentPortfolio, monthlyDonation, years) {
-    const ANNUAL_DIVIDEND_RATE = 0.05;
-    const REINVEST_RATE        = 0.50;
-    const ANNUAL_MARKET_RETURN = 0.09;
+function runSimulation(monthly, years) {
+    const ANNUAL_DIVIDEND  = 0.05;
+    const REINVEST_RATE    = 0.50;
+    const CAUSES_RATE      = 0.40;
+    const ANNUAL_MARKET    = 0.09;
 
-    const dataPoints  = [];
-    let portfolioValue = currentPortfolio;
-    const totalMonths  = years * 12;
+    let portfolioValue = 0;
+    let crossoverMonth = -1;
+    const yearlyPoints = [];
 
-    for (let month = 0; month <= totalMonths; month++) {
-        portfolioValue += monthlyDonation;
-        const monthlyDividend = portfolioValue * (ANNUAL_DIVIDEND_RATE / 12);
-        portfolioValue       += monthlyDividend * REINVEST_RATE;
-        portfolioValue       += portfolioValue * (ANNUAL_MARKET_RETURN / 12);
+    for (let m = 1; m <= years * 12; m++) {
+        portfolioValue      += monthly;
+        const monthlyDiv     = portfolioValue * (ANNUAL_DIVIDEND / 12);
+        portfolioValue      += monthlyDiv * REINVEST_RATE;
+        portfolioValue      += portfolioValue * (ANNUAL_MARKET / 12);
+        const causesAmt      = monthlyDiv * CAUSES_RATE;
 
-        if (month % 3 === 0) {
-            dataPoints.push({ month, portfolio: Math.round(portfolioValue * 100) / 100 });
+        if (crossoverMonth < 0 && causesAmt >= monthly) crossoverMonth = m;
+
+        if (m % 12 === 0) {
+            yearlyPoints.push({
+                year:      m / 12,
+                portfolio: Math.round(portfolioValue * 100) / 100,
+                monthlyDiv: Math.round(monthlyDiv * 100) / 100,
+                causesAmt:  Math.round(causesAmt * 100) / 100
+            });
         }
     }
-    return dataPoints;
+
+    const crossoverYearIdx = crossoverMonth > 0
+        ? Math.min(Math.ceil(crossoverMonth / 12) - 1, yearlyPoints.length - 1)
+        : -1;
+
+    return { points: yearlyPoints, crossoverYearIdx, crossoverMonth };
 }
 
-function displayPredictionChart(currentProjection, newProjection, currentMonthly, newMonthly) {
+// Chart 1 — Cash invested (red) vs Portfolio value (cyan) with shaded gain
+function displayInvestedVsPortfolioChart(points, monthly, years) {
     const ctx = document.getElementById('predictionChart');
     if (!ctx) return;
+    const existing = Chart.getChart(ctx);
+    if (existing) existing.destroy();
 
-    const existingChart = Chart.getChart(ctx);
-    if (existingChart) existingChart.destroy();
+    const labels   = points.map(p => `Year ${p.year}`);
+    const invested  = points.map(p => Math.round(p.year * 12 * monthly));
+    const portfolio = points.map(p => Math.round(p.portfolio));
+
+    const commonOpts = {
+        responsive:          true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: true, position: 'top',
+                labels: {
+                    color: '#F5F1E8', usePointStyle: true, padding: 15,
+                    font: { size: 12, family: "'IBM Plex Sans', sans-serif" }
+                }
+            },
+            tooltip: {
+                mode: 'index', intersect: false,
+                backgroundColor: 'rgba(26, 18, 32, 0.9)',
+                titleColor: '#F5F1E8', bodyColor: '#F5F1E8',
+                borderColor: 'rgba(245, 241, 232, 0.2)', borderWidth: 1, padding: 12,
+                callbacks: { label: c => c.dataset.label + ': €' + c.parsed.y.toLocaleString() }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: { color: '#A89E8C', callback: v => '€' + v.toLocaleString() },
+                grid:  { color: 'rgba(245, 241, 232, 0.1)' }
+            },
+            x: {
+                ticks: { color: '#A89E8C' },
+                grid:  { color: 'rgba(245, 241, 232, 0.05)' }
+            }
+        }
+    };
 
     new Chart(ctx, {
         type: 'line',
         data: {
-            labels: currentProjection.map(d => `Month ${d.month}`),
+            labels,
             datasets: [
                 {
-                    label:           `Current (€${currentMonthly.toFixed(0)}/mo)`,
-                    data:            currentProjection.map(d => d.portfolio),
-                    borderColor:     '#A89E8C',
-                    backgroundColor: 'rgba(168, 158, 140, 0.1)',
+                    label:           'Cash Invested',
+                    data:            invested,
+                    borderColor:     '#E05252',
+                    backgroundColor: 'rgba(224, 82, 82, 0)',
                     borderWidth:     2,
-                    borderDash:      [5, 5],
-                    tension:         0.4,
-                    fill:            false
+                    tension:         0,
+                    fill:            false,
+                    pointRadius:     3
                 },
                 {
-                    label:           `New (€${newMonthly}/mo)`,
-                    data:            newProjection.map(d => d.portfolio),
-                    borderColor:     '#32CD32',
-                    backgroundColor: 'rgba(50, 205, 50, 0.1)',
+                    label:           'Portfolio Value',
+                    data:            portfolio,
+                    borderColor:     '#00CED1',
+                    backgroundColor: 'rgba(0, 206, 209, 0.15)',
                     borderWidth:     3,
                     tension:         0.4,
-                    fill:            false
+                    fill:            '-1',   // shade gap down to "Cash Invested" line
+                    pointRadius:     3
+                }
+            ]
+        },
+        options: commonOpts
+    });
+}
+
+// Chart 2 — Monthly dividend (green) vs flat monthly input (orange) with purple crossover line
+function displayDividendCrossoverChart(points, monthly, crossoverYearIdx) {
+    const ctx = document.getElementById('predictionChart2');
+    if (!ctx) return;
+    const existing = Chart.getChart(ctx);
+    if (existing) existing.destroy();
+
+    const labels = points.map(p => `Year ${p.year}`);
+
+    const crossoverPlugin = {
+        id: 'crossoverLine',
+        afterDraw(chart) {
+            if (crossoverYearIdx < 0) return;
+            const { ctx: c, chartArea, scales } = chart;
+            const x = scales.x.getPixelForTick(crossoverYearIdx);
+            c.save();
+            c.beginPath();
+            c.moveTo(x, chartArea.top);
+            c.lineTo(x, chartArea.bottom);
+            c.strokeStyle = 'rgba(147, 112, 219, 0.9)';
+            c.lineWidth   = 2;
+            c.setLineDash([6, 4]);
+            c.stroke();
+            c.fillStyle = 'rgba(147, 112, 219, 0.9)';
+            c.font      = `11px 'IBM Plex Sans', sans-serif`;
+            c.textAlign = 'left';
+            c.fillText('Crossover', x + 6, chartArea.top + 16);
+            c.restore();
+        }
+    };
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [
+                {
+                    label:       `Monthly Investment (€${monthly})`,
+                    data:        points.map(() => monthly),
+                    borderColor: 'rgba(255, 165, 0, 0.9)',
+                    borderWidth: 2,
+                    borderDash:  [8, 4],
+                    tension:     0,
+                    fill:        false,
+                    pointRadius: 0
+                },
+                {
+                    label:           'Monthly Dividend Income',
+                    data:            points.map(p => p.monthlyDiv),
+                    borderColor:     '#32CD32',
+                    backgroundColor: 'rgba(50, 205, 50, 0.08)',
+                    borderWidth:     3,
+                    tension:         0.4,
+                    fill:            false,
+                    pointRadius:     3
                 }
             ]
         },
@@ -784,38 +862,32 @@ function displayPredictionChart(currentProjection, newProjection, currentMonthly
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    display:  true,
-                    position: 'top',
+                    display: true, position: 'top',
                     labels: {
-                        color:         '#F5F1E8',
-                        usePointStyle: true,
-                        padding:       15,
+                        color: '#F5F1E8', usePointStyle: true, padding: 15,
                         font: { size: 12, family: "'IBM Plex Sans', sans-serif" }
                     }
                 },
                 tooltip: {
+                    mode: 'index', intersect: false,
                     backgroundColor: 'rgba(26, 18, 32, 0.9)',
-                    titleColor:      '#F5F1E8',
-                    bodyColor:       '#F5F1E8',
-                    callbacks: {
-                        label: ctx => ctx.dataset.label + ': €' + ctx.parsed.y.toLocaleString()
-                    }
+                    titleColor: '#F5F1E8', bodyColor: '#F5F1E8',
+                    borderColor: 'rgba(245, 241, 232, 0.2)', borderWidth: 1, padding: 12,
+                    callbacks: { label: c => c.dataset.label + ': €' + c.parsed.y.toFixed(2) }
                 }
             },
             scales: {
                 y: {
-                    beginAtZero: false,
-                    ticks: {
-                        color:    '#A89E8C',
-                        callback: value => '€' + value.toLocaleString()
-                    },
-                    grid: { color: 'rgba(245, 241, 232, 0.1)' }
+                    beginAtZero: true,
+                    ticks: { color: '#A89E8C', callback: v => '€' + v.toFixed(0) },
+                    grid:  { color: 'rgba(245, 241, 232, 0.1)' }
                 },
                 x: {
-                    ticks: { color: '#A89E8C', maxRotation: 45, minRotation: 45 },
+                    ticks: { color: '#A89E8C' },
                     grid:  { color: 'rgba(245, 241, 232, 0.05)' }
                 }
             }
-        }
+        },
+        plugins: [crossoverPlugin]
     });
 }

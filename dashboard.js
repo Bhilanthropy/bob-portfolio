@@ -46,7 +46,7 @@ function displayUserProfile(user) {
     if (userName)     userName.textContent     = user.name;
     if (userUsername) userUsername.textContent = `@${user.username}`;
 
-    if (userAvatar && user.avatar) {
+    if (userAvatar && user.avatar && user.avatar.colors) {
         const colors = user.avatar.colors;
         userAvatar.style.setProperty('--theme-color-1', colors[0] || '#ccc');
         userAvatar.style.setProperty('--theme-color-2', colors[1] || '#999');
