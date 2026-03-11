@@ -319,10 +319,6 @@ function displayChart(donations) {
 
     if (currentChartInstance) currentChartInstance.destroy();
 
-    const chartData = currentChartView === 'monthly'
-        ? prepareMonthlyData(metrics.dataPoints, avgMonthly)
-        : prepareYearlyData(metrics.dataPoints, avgMonthly);
-
     const isYearly    = currentChartView === 'yearly';
     const totalMonths = metrics.dataPoints.length;
     const avgMonthly  = totalMonths > 0 ? Math.round(metrics.totalDonated / totalMonths) : 0;
@@ -330,6 +326,10 @@ function displayChart(donations) {
     const avgLabel    = isYearly
         ? `Consistent giving pace (€${avgYearly}/yr)`
         : `Consistent giving pace (€${avgMonthly}/mo)`;
+
+    const chartData = currentChartView === 'monthly'
+        ? prepareMonthlyData(metrics.dataPoints, avgMonthly)
+        : prepareYearlyData(metrics.dataPoints, avgMonthly);
 
     const datasets = [
         {
