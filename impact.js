@@ -92,14 +92,14 @@ window.initImpactDashboard = function (userData) {
 function generateRealisticDonations() {
     const donations = [];
     const startDate = new Date();
-    startDate.setFullYear(startDate.getFullYear() - 7);
+    startDate.setFullYear(startDate.getFullYear() - 22);
     startDate.setDate(1);
 
-    for (let i = 0; i < 84; i++) {
+    for (let i = 0; i < 264; i++) {
         const donationDate = new Date(startDate);
         donationDate.setMonth(donationDate.getMonth() + i);
         donationDate.setDate(5);
-        donations.push({ amount: 35, date: donationDate.toISOString().split('T')[0] });
+        donations.push({ amount: 50, date: donationDate.toISOString().split('T')[0] });
     }
 
     return donations;
@@ -320,11 +320,16 @@ function displayChart(donations) {
     if (currentChartInstance) currentChartInstance.destroy();
 
     const chartData = currentChartView === 'monthly'
-        ? prepareMonthlyData(metrics.dataPoints)
-        : prepareYearlyData(metrics.dataPoints);
+        ? prepareMonthlyData(metrics.dataPoints, avgMonthly)
+        : prepareYearlyData(metrics.dataPoints, avgMonthly);
 
-    const isYearly = currentChartView === 'yearly';
-    const avgLabel = isYearly ? 'Avg. Contribution (€450/yr)' : 'Avg. Contribution (€37.50/mo)';
+    const isYearly    = currentChartView === 'yearly';
+    const totalMonths = metrics.dataPoints.length;
+    const avgMonthly  = totalMonths > 0 ? Math.round(metrics.totalDonated / totalMonths) : 0;
+    const avgYearly   = avgMonthly * 12;
+    const avgLabel    = isYearly
+        ? `Consistent giving pace (€${avgYearly}/yr)`
+        : `Consistent giving pace (€${avgMonthly}/mo)`;
 
     const datasets = [
         {
@@ -426,17 +431,17 @@ function displayChart(donations) {
     setupChartViewToggle(donations);
 }
 
-function prepareMonthlyData(dataPoints) {
+function prepareMonthlyData(dataPoints, avgMonthly) {
     return {
         labels:          dataPoints.map(d => d.date),
         donations:       dataPoints.map(d => d.donations),
         portfolio:       dataPoints.map(d => d.portfolio),
         causesYield:     dataPoints.map(d => d.causesYield),
-        avgContribution: dataPoints.map((_, i) => Math.round((i + 1) * (450 / 12) * 100) / 100)
+        avgContribution: dataPoints.map((_, i) => Math.round((i + 1) * avgMonthly * 100) / 100)
     };
 }
 
-function prepareYearlyData(dataPoints) {
+function prepareYearlyData(dataPoints, avgMonthly) {
     const yearlyData = {};
     dataPoints.forEach(point => {
         if (!yearlyData[point.year] || point.date > yearlyData[point.year].date) {
@@ -449,7 +454,7 @@ function prepareYearlyData(dataPoints) {
         donations:       years.map(y => yearlyData[y].donations),
         portfolio:       years.map(y => yearlyData[y].portfolio),
         causesYield:     years.map(y => yearlyData[y].causesYield),
-        avgContribution: years.map((_, i) => (i + 1) * 450)
+        avgContribution: years.map((_, i) => (i + 1) * avgMonthly * 12)
     };
 }
 
