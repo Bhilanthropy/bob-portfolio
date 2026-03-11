@@ -5,7 +5,12 @@ let _impactFilterTo    = null;
 let _impactUserData    = null;
 
 function getFilteredDonations() {
-    const all = JSON.parse(localStorage.getItem('donations_v2') || '[]');
+    let all = [];
+    try {
+        all = JSON.parse(localStorage.getItem('donations_v2') || '[]');
+    } catch (e) {
+        localStorage.removeItem('donations_v2');
+    }
     if (_impactFilterRange === 'all') return all;
 
     const today = new Date();

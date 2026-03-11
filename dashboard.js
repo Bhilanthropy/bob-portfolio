@@ -8,7 +8,15 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
     }
 
-    const user = JSON.parse(userData);
+    let user;
+    try {
+        user = JSON.parse(userData);
+    } catch (e) {
+        localStorage.removeItem('user');
+        localStorage.removeItem('isLoggedIn');
+        window.location.href = 'index.html';
+        return;
+    }
 
     displayUserProfile(user);
     setupLogout();

@@ -64,10 +64,12 @@
         // Character counter for message field
         const messageField = document.getElementById('message');
         const charCount = document.getElementById('charCount');
-        
-        messageField.addEventListener('input', function() {
-            charCount.textContent = this.value.length;
-        });
+
+        if (messageField && charCount) {
+            messageField.addEventListener('input', function() {
+                charCount.textContent = this.value.length;
+            });
+        }
     </script>
 </body>
 </html>
