@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     let selectedThemes = [];
+    let currentAvatarColors = [];
     const MAX_THEMES = 3;
     
     // Theme color palettes (random colors for each theme)
@@ -104,11 +105,12 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // Generate avatar based on selected themes
-        const colors = selectedThemes.map(theme => {
+        // Generate avatar based on selected themes (store so submit reuses same colors)
+        currentAvatarColors = selectedThemes.map(theme => {
             const palette = themeColors[theme];
             return palette[Math.floor(Math.random() * palette.length)];
         });
+        const colors = currentAvatarColors;
         
         // Set CSS variables for gradient
         avatarPreview.style.setProperty('--theme-color-1', colors[0] || '#ccc');
@@ -185,10 +187,7 @@ document.addEventListener('DOMContentLoaded', function() {
             password: document.getElementById('password').value, // In production, NEVER store plain passwords!
             themes: selectedThemes,
             avatar: {
-                colors: selectedThemes.map(theme => {
-                    const palette = themeColors[theme];
-                    return palette[Math.floor(Math.random() * palette.length)];
-                }),
+                colors: currentAvatarColors,
                 pattern: selectedThemes.join('-')
             },
             createdAt: new Date().toISOString()

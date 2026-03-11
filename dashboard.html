@@ -191,7 +191,7 @@
                                 <div class="how-step-num">2</div>
                                 <div class="how-step-body">
                                     <strong>The endowment earns dividends</strong>
-                                    <p>The portfolio generates ~5% annual dividend yield through a diversified investment strategy, plus market appreciation over time.</p>
+                                    <p>Invested in a dividend-focused equity portfolio (high-yield ETFs and market trackers), targeting ~5% annual dividend yield plus ~9% market appreciation. A pure S&amp;P 500 index yields ~1.5% — 4H targets higher-yield strategies to maximise regular impact distributions.</p>
                                 </div>
                             </div>
                             <div class="how-arrow">→</div>
@@ -231,8 +231,8 @@
                                 <path d="M2 17L12 22L22 17M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" fill="none"/>
                             </svg>
                             <div>
-                                <strong>Milestone Reached!</strong>
-                                <p>Your portfolio now generates more annual impact than your yearly donations</p>
+                                <strong>Crossover reached!</strong>
+                                <p>Your endowment now distributes more to your causes each year than you donate annually. Your giving has become self-amplifying — and it keeps growing.</p>
                             </div>
                         </div>
                     </div>
@@ -273,7 +273,7 @@
 
                         <div class="breakdown-card">
                             <h3 class="breakdown-title">Your Cause Distribution</h3>
-                            <p class="breakdown-description">40% of dividends split across your themes</p>
+                            <p class="breakdown-description">40% of annual dividends, split equally across your chosen themes</p>
                             <div class="causes-list" id="causesList"></div>
                         </div>
 
@@ -323,20 +323,21 @@
 
                     <!-- Investment Simulator -->
                     <div class="prediction-section">
-                        <h2 class="section-title">Investment Simulator</h2>
+                        <h2 class="section-title">Impact Simulator</h2>
                         <p class="section-description">
-                            Model a fixed monthly investment over time. See when your dividend income starts funding your causes on its own — and exactly when it surpasses your monthly contribution.
+                            The demo above shows 22 years of €50/month — by year 17 the endowment pays more to causes per month than the donation itself, and reaches €100/month to causes by year 22 on just €13,200 invested.
+                            Use this simulator to explore what a different amount or time horizon would mean for your long-term impact. The crossover point marks when dividend yield to causes exceeds your monthly contribution.
                         </p>
 
                         <div class="prediction-calculator">
                             <div class="calculator-inputs">
                                 <div class="form-group">
-                                    <label for="simMonthly">Monthly Investment (€)</label>
-                                    <input type="number" id="simMonthly" min="1" step="1" value="100" placeholder="100">
+                                    <label for="simMonthly">Monthly Donation (€)</label>
+                                    <input type="number" id="simMonthly" min="1" step="1" value="50" placeholder="50">
                                 </div>
                                 <div class="form-group">
                                     <label for="simYears">Period (years)</label>
-                                    <input type="number" id="simYears" min="1" max="50" value="10" placeholder="10">
+                                    <input type="number" id="simYears" min="1" max="50" value="22" placeholder="22">
                                 </div>
                                 <button id="runSimulation" class="submit-button">Simulate</button>
                             </div>
@@ -407,7 +408,7 @@
                         </form>
 
                         <div class="demo-data-reset">
-                            <p class="reset-description">Want to explore with demo data? Reset to 7.5 years of sample donations with compounding effects.</p>
+                            <p class="reset-description">Want to explore with demo data? Reset to 22 years of €50/month donations — showing the full compounding journey including the crossover point at year 17.</p>
                             <button id="resetDemoData" class="reset-button">Reset to Demo Data</button>
                         </div>
                     </div>
