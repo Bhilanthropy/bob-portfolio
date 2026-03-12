@@ -59,7 +59,7 @@ const DEMO_PROJECTS = [
         org:         'Andela Foundation',
         location:    'Nigeria & Ghana',
         summary:     'Equipping 30 rural secondary schools with coding labs and a two-year curriculum.',
-        body:        'Sub-Saharan Africa will have the world's largest working-age population by 2035, yet fewer than 15% of schools teach any form of digital skills. This project builds solar-powered computer labs in 30 rural secondary schools, delivers a two-year coding curriculum, and trains teachers in-country. Students completing the programme have a direct pathway to the Andela fellowship.',
+        body:        "Sub-Saharan Africa will have the world's largest working-age population by 2035, yet fewer than 15% of schools teach any form of digital skills. This project builds solar-powered computer labs in 30 rural secondary schools, delivers a two-year coding curriculum, and trains teachers in-country. Students completing the programme have a direct pathway to the Andela fellowship.",
         goal:        60000,
         raised:      41800,
         gradient:    ['#1a2a3a', '#0a1a2a']
