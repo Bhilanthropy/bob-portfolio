@@ -79,168 +79,68 @@
                 <!-- ── IMPACT TAB ── -->
                 <div class="tab-panel" id="tab-impact">
 
-                    <!-- Date Range Filter -->
-                    <div class="date-filter-bar">
-                        <div class="filter-presets">
-                            <span class="filter-label">View:</span>
-                            <button class="filter-preset active" data-range="all">All Time</button>
-                            <button class="filter-preset" data-range="1y">Last Year</button>
-                            <button class="filter-preset" data-range="3y">Last 3 Years</button>
-                            <button class="filter-preset" data-range="custom">Custom</button>
-                        </div>
-                        <div class="filter-custom" id="filterCustom">
-                            <div class="filter-date-group">
-                                <label for="filterFrom">From</label>
-                                <input type="date" id="filterFrom">
-                            </div>
-                            <div class="filter-date-group">
-                                <label for="filterTo">To</label>
-                                <input type="date" id="filterTo">
-                            </div>
-                            <button id="applyFilter" class="filter-apply-btn">Apply</button>
-                        </div>
-                    </div>
-
                     <!-- Impact Header -->
                     <div class="impact-header">
                         <h1 class="page-title">Your Impact Dashboard</h1>
-                        <p class="page-subtitle">
-                            Watch your philanthropic legacy grow
-                            <span class="years-badge" id="yearsGivingBadge" style="display: none;">
-                                · <span id="yearsGiving"></span> of giving
-                            </span>
+                        <p class="page-subtitle">Demo scenario: €50/month · 22 years · dividend-focused equity portfolio</p>
+                    </div>
+
+                    <!-- Hero Metrics: 3 cards -->
+                    <div class="hero-metrics-grid">
+                        <div class="hero-metric-card">
+                            <span class="hero-metric-label">You've invested</span>
+                            <span class="hero-metric-value" id="heroInvested">€0</span>
+                            <span class="hero-metric-sub">264 months × €50</span>
+                        </div>
+                        <div class="hero-metric-card hero-metric-highlight">
+                            <span class="hero-metric-label">Portfolio value today</span>
+                            <span class="hero-metric-value" id="heroPortfolio">€0</span>
+                            <span class="hero-metric-sub" id="heroGrowth">+0% return on invested capital</span>
+                        </div>
+                        <div class="hero-metric-card hero-metric-crossover" id="heroCrossoverCard">
+                            <span class="hero-metric-label">Crossover point</span>
+                            <span class="hero-metric-value" id="heroCrossover">Year —</span>
+                            <span class="hero-metric-sub" id="heroCrossoverSub">Portfolio outworks your donation</span>
+                        </div>
+                    </div>
+
+                    <!-- PRIMARY CHART: When dividends beat your donation -->
+                    <div class="chart-section">
+                        <h2 class="section-title">When your portfolio outworks you</h2>
+                        <p class="section-description">
+                            The orange line is your monthly donation — flat at €50. The green curve is how much the portfolio distributes to your chosen causes each month (40% of dividends). The moment green crosses orange, your money is doing more good than you are.
+                        </p>
+                        <div class="chart-container">
+                            <canvas id="crossoverChart"></canvas>
+                        </div>
+                        <p class="chart-note">
+                            <span style="color:rgba(255,165,0,0.9)">■</span> Monthly donation (€50) &nbsp;|&nbsp;
+                            <span style="color:#32CD32">■</span> Monthly causes payout (40% of dividends) &nbsp;|&nbsp;
+                            <span style="color:#9370DB">┆</span> Crossover
                         </p>
                     </div>
 
-                    <!-- Key Metrics -->
-                    <div class="metrics-grid">
-                        <div class="metric-card">
-                            <div class="metric-icon">
-                                <svg viewBox="0 0 100 100" class="icon-donate">
-                                    <path d="M50 20 L50 80 M30 50 L70 50" stroke="currentColor" stroke-width="3" fill="none"/>
-                                    <circle cx="50" cy="50" r="30" stroke="currentColor" stroke-width="2" fill="none"/>
-                                </svg>
-                            </div>
-                            <h3 class="metric-label">Total Donated</h3>
-                            <p class="metric-value" id="totalDonated">€0</p>
-                            <p class="metric-change">Since joining</p>
-                        </div>
-
-                        <div class="metric-card">
-                            <div class="metric-icon">
-                                <svg viewBox="0 0 100 100" class="icon-monthly">
-                                    <rect x="20" y="60" width="15" height="20" fill="currentColor" opacity="0.4"/>
-                                    <rect x="42" y="50" width="15" height="30" fill="currentColor" opacity="0.6"/>
-                                    <rect x="64" y="35" width="15" height="45" fill="currentColor" opacity="0.8"/>
-                                </svg>
-                            </div>
-                            <h3 class="metric-label">Monthly Average</h3>
-                            <p class="metric-value" id="monthlyDonations">€0</p>
-                            <p class="metric-change">Last 12 months</p>
-                        </div>
-
-                        <div class="metric-card highlight">
-                            <div class="metric-icon">
-                                <svg viewBox="0 0 100 100" class="icon-growth">
-                                    <path d="M20 80 Q30 60, 40 65 T60 50 T80 30" stroke="currentColor" stroke-width="3" fill="none"/>
-                                    <path d="M75 25 L85 30 L80 40" fill="currentColor"/>
-                                </svg>
-                            </div>
-                            <h3 class="metric-label">Portfolio Value</h3>
-                            <p class="metric-value" id="portfolioValue">€0</p>
-                            <p class="metric-change" id="portfolioGrowth">+0% growth</p>
-                        </div>
-
-                        <div class="metric-card">
-                            <div class="metric-icon">
-                                <svg viewBox="0 0 100 100" class="icon-impact">
-                                    <circle cx="50" cy="50" r="20" fill="currentColor" opacity="0.3"/>
-                                    <circle cx="50" cy="50" r="30" fill="none" stroke="currentColor" stroke-width="2" opacity="0.5"/>
-                                    <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" stroke-width="1" opacity="0.3"/>
-                                </svg>
-                            </div>
-                            <h3 class="metric-label">Annual Impact</h3>
-                            <p class="metric-value" id="annualImpact">€0</p>
-                            <p class="metric-change">40% of annual dividends → your causes</p>
-                        </div>
-                    </div>
-
-                    <!-- Consistency Notice -->
-                    <div class="consistency-notice">
-                        <svg class="consistency-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10"/>
-                            <line x1="12" y1="8" x2="12" y2="12"/>
-                            <line x1="12" y1="16" x2="12.01" y2="16"/>
-                        </svg>
-                        <p><strong>Long-term scaled impact requires regular monthly giving.</strong> The compounding effect shown here assumes consistent contributions — every month you give, the endowment grows and generates more dividends for your causes. Irregular or one-time donations significantly slow the curve.</p>
-                    </div>
-
-                    <!-- How It Works -->
-                    <div class="how-it-works-card">
-                        <h3 class="how-it-works-title">How your donations create impact</h3>
-                        <div class="how-steps">
-                            <div class="how-step">
-                                <div class="how-step-num">1</div>
-                                <div class="how-step-body">
-                                    <strong>You donate monthly</strong>
-                                    <p>Regular contributions are pooled into the 4H endowment. Consistency is essential — the model is built on sustained giving, not one-off gifts.</p>
-                                </div>
-                            </div>
-                            <div class="how-arrow">→</div>
-                            <div class="how-step">
-                                <div class="how-step-num">2</div>
-                                <div class="how-step-body">
-                                    <strong>The endowment earns dividends</strong>
-                                    <p>Invested in a dividend-focused equity portfolio (high-yield ETFs and market trackers), targeting ~5% annual dividend yield plus ~9% market appreciation. A pure S&amp;P 500 index yields ~1.5% — 4H targets higher-yield strategies to maximise regular impact distributions.</p>
-                                </div>
-                            </div>
-                            <div class="how-arrow">→</div>
-                            <div class="how-step">
-                                <div class="how-step-num">3</div>
-                                <div class="how-step-body">
-                                    <strong>Dividends are split 3 ways</strong>
-                                    <p><span class="how-split reinvest">50% reinvested</span> to grow the endowment &nbsp;·&nbsp; <span class="how-split causes">40% to your causes</span> &nbsp;·&nbsp; <span class="how-split ops">10% foundation operations</span> (staff, compliance, platform)</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Growth Chart -->
+                    <!-- SECONDARY CHART: Portfolio growth -->
                     <div class="chart-section">
-                        <div class="chart-header">
-                            <div>
-                                <h2 class="section-title">Growth Over Time</h2>
-                                <p class="section-description">
-                                    Each month's dividends are split: 50% reinvested to grow the endowment, 40% distributed to your causes, 10% to foundation operations. Consistent monthly donations are what drive this curve upward.
-                                </p>
-                            </div>
-                            <div class="view-toggle">
-                                <button id="viewMonthly" class="toggle-btn active">Monthly</button>
-                                <button id="viewYearly" class="toggle-btn">Yearly</button>
-                            </div>
-                        </div>
-
+                        <h2 class="section-title">How the portfolio grows</h2>
+                        <p class="section-description">
+                            The red line is the total cash you've put in. The cyan line is what the portfolio is actually worth. The shaded area between them is the gain your money earned — money that keeps growing and funding your causes.
+                        </p>
                         <div class="chart-container">
-                            <canvas id="compoundingChart"></canvas>
+                            <canvas id="portfolioGrowthChart"></canvas>
                         </div>
-                        <p class="chart-note">Click legend items to show/hide lines</p>
-
-                        <div class="milestone-alert" id="milestoneAlert" style="display: none;">
-                            <svg viewBox="0 0 24 24" class="alert-icon">
-                                <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="currentColor"/>
-                                <path d="M2 17L12 22L22 17M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" fill="none"/>
-                            </svg>
-                            <div>
-                                <strong>Crossover reached!</strong>
-                                <p>Your endowment now distributes more to your causes each year than you donate annually. Your giving has become self-amplifying — and it keeps growing.</p>
-                            </div>
-                        </div>
+                        <p class="chart-note">
+                            <span style="color:#E05252">■</span> Cash invested &nbsp;|&nbsp;
+                            <span style="color:#00CED1">■</span> Portfolio value &nbsp;|&nbsp;
+                            Shaded area: unrealised gain
+                        </p>
                     </div>
 
-                    <!-- Impact Breakdown -->
+                    <!-- Breakdown: donut + causes -->
                     <div class="breakdown-grid">
                         <div class="breakdown-card">
-                            <h3 class="breakdown-title">Fund Allocation</h3>
+                            <h3 class="breakdown-title">How dividends are split</h3>
+                            <p class="breakdown-description">Every euro of dividend income is distributed three ways</p>
                             <div class="allocation-visual">
                                 <div class="donut-chart-wrapper">
                                     <canvas id="allocationChart"></canvas>
@@ -272,61 +172,18 @@
                         </div>
 
                         <div class="breakdown-card">
-                            <h3 class="breakdown-title">Your Cause Distribution</h3>
+                            <h3 class="breakdown-title">Your cause distribution</h3>
                             <p class="breakdown-description">40% of annual dividends, split equally across your chosen themes</p>
                             <div class="causes-list" id="causesList"></div>
                         </div>
-
-                        <div class="breakdown-card">
-                            <h3 class="breakdown-title">Cumulative Impact</h3>
-                            <p class="breakdown-description">Total allocated from all dividends earned to date</p>
-                            <div class="allocation-list">
-                                <div class="allocation-item">
-                                    <div class="allocation-label">
-                                        <span class="allocation-dot reinvest"></span>
-                                        <span>Total Reinvested</span>
-                                    </div>
-                                    <span class="allocation-percent" id="totalReinvested">€0</span>
-                                </div>
-                                <div class="allocation-item">
-                                    <div class="allocation-label">
-                                        <span class="allocation-dot causes"></span>
-                                        <span>Total to Causes</span>
-                                    </div>
-                                    <span class="allocation-percent" id="totalCauses">€0</span>
-                                </div>
-                                <div class="allocation-item">
-                                    <div class="allocation-label">
-                                        <span class="allocation-dot maintenance"></span>
-                                        <span>Foundation Operations</span>
-                                    </div>
-                                    <span class="allocation-percent" id="totalMaintenance">€0</span>
-                                </div>
-                            </div>
-                        </div>
                     </div>
 
-                    <!-- Donation History -->
-                    <div class="history-section">
-                        <div class="history-header">
-                            <div>
-                                <h2 class="section-title">Donation History</h2>
-                                <p class="section-description">Your giving journey over time</p>
-                            </div>
-                            <span class="history-count-badge" id="donationCount"></span>
-                        </div>
-                        <div class="history-list" id="donationHistoryList"></div>
-                        <button id="toggleHistory" class="toggle-history-btn" style="display: none;">
-                            Show all donations
-                        </button>
-                    </div>
-
-                    <!-- Investment Simulator -->
+                    <!-- Impact Simulator -->
                     <div class="prediction-section">
                         <h2 class="section-title">Impact Simulator</h2>
                         <p class="section-description">
-                            The demo above shows 22 years of €50/month — by year 17 the endowment pays more to causes per month than the donation itself, and reaches €100/month to causes by year 22 on just €13,200 invested.
-                            Use this simulator to explore what a different amount or time horizon would mean for your long-term impact. The crossover point marks when dividend yield to causes exceeds your monthly contribution.
+                            Change the monthly amount or time horizon to see how your crossover point shifts.
+                            This is the tool to explore what consistent giving means for your long-term impact.
                         </p>
 
                         <div class="prediction-calculator">
@@ -375,43 +232,20 @@
                                         <div class="chart-container sim-chart-container">
                                             <canvas id="predictionChart"></canvas>
                                         </div>
-                                        <p class="chart-note"><span style="color:#E05252">Red</span>: cash invested &nbsp;|&nbsp; <span style="color:#00CED1">Cyan</span>: portfolio value &nbsp;|&nbsp; Shaded area: unrealised gain</p>
+                                        <p class="chart-note"><span style="color:#E05252">Red</span>: cash invested &nbsp;|&nbsp; <span style="color:#00CED1">Cyan</span>: portfolio value &nbsp;|&nbsp; Shaded: unrealised gain</p>
                                     </div>
                                     <div class="sim-chart-panel">
                                         <p class="sim-chart-title">Monthly Contribution vs. Dividend Income</p>
                                         <div class="chart-container sim-chart-container">
                                             <canvas id="predictionChart2"></canvas>
                                         </div>
-                                        <p class="chart-note"><span style="color:rgba(255,165,0,0.9)">Orange</span>: monthly input &nbsp;|&nbsp; <span style="color:#32CD32">Green</span>: dividend income &nbsp;|&nbsp; <span style="color:#9370DB">Purple line</span>: crossover</p>
+                                        <p class="chart-note"><span style="color:rgba(255,165,0,0.9)">Orange</span>: monthly input &nbsp;|&nbsp; <span style="color:#32CD32">Green</span>: dividend income &nbsp;|&nbsp; <span style="color:#9370DB">Purple</span>: crossover</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Add Donation Section -->
-                    <div class="add-donation-section">
-                        <h2 class="section-title">Add a Donation</h2>
-                        <p class="section-description">Record a new contribution to your philanthropic portfolio</p>
-                        <form id="donationForm" class="donation-form">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="donationAmount">Amount (€)</label>
-                                    <input type="number" id="donationAmount" min="1" step="0.01" required placeholder="0.00">
-                                </div>
-                                <div class="form-group">
-                                    <label for="donationDate">Date</label>
-                                    <input type="date" id="donationDate" required>
-                                </div>
-                            </div>
-                            <button type="submit" class="submit-button">Add Donation</button>
-                        </form>
-
-                        <div class="demo-data-reset">
-                            <p class="reset-description">Want to explore with demo data? Reset to 22 years of €50/month donations — showing the full compounding journey including the crossover point at year 17.</p>
-                            <button id="resetDemoData" class="reset-button">Reset to Demo Data</button>
-                        </div>
-                    </div>
                 </div>
 
                 <!-- ── NEWS TAB ── -->
