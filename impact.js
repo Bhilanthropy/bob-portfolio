@@ -1,25 +1,22 @@
 // ── Constants ─────────────────────────────────────────────────────────────
 const DEMO_MONTHLY          = 50;
 const DEMO_YEARS            = 22;
-const ANNUAL_DIVIDEND_RATE  = 0.05;   // 5% dividend yield (high-yield ETF strategy)
+// Dividend-focused equity ETF strategy (e.g. SCHD + growth ETF mix)
+// Total gross return ~11.5%; after sending 50% of dividends out → ~9.25% effective portfolio growth
+const ANNUAL_DIVIDEND_RATE  = 0.045;  // 4.5% dividend yield — achievable with dividend ETFs
 const REINVEST_RATE         = 0.50;   // 50% of dividends reinvested
-const CAUSES_RATE           = 0.40;   // 40% of dividends to your causes
-const ANNUAL_MARKET_RETURN  = 0.09;   // 9% annual price appreciation
+const CAUSES_RATE           = 0.40;   // 40% of dividends → your causes
+const ANNUAL_MARKET_RETURN  = 0.07;   // 7% annual price appreciation (long-term equity)
 
 // ── Toast ─────────────────────────────────────────────────────────────────
 function showToast(message, type = 'success') {
     const container = document.getElementById('toastContainer');
     if (!container) return;
-
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
     toast.textContent = message;
     container.appendChild(toast);
-
-    requestAnimationFrame(() => {
-        requestAnimationFrame(() => toast.classList.add('toast-visible'));
-    });
-
+    requestAnimationFrame(() => requestAnimationFrame(() => toast.classList.add('toast-visible')));
     setTimeout(() => {
         toast.classList.remove('toast-visible');
         setTimeout(() => toast.remove(), 350);
@@ -27,12 +24,13 @@ function showToast(message, type = 'success') {
 }
 
 // ── Core simulation ───────────────────────────────────────────────────────
-// Returns yearly data points + summary for a given monthly/years scenario.
+// Each month: deposit → earn dividend → split dividend → price appreciation.
+// Returns yearly snapshots + summary stats.
 function runScenario(monthly, years) {
-    const yearlyPoints = [];
+    const points       = [];
     let portfolio      = 0;
     let totalInvested  = 0;
-    let crossoverMonth = -1;
+    let crossoverMonth = -1;   // first month where 40% of monthly div ≥ monthly contribution
 
     for (let m = 1; m <= years * 12; m++) {
         portfolio     += monthly;
@@ -41,6 +39,7 @@ function runScenario(monthly, years) {
         const monthlyDiv = portfolio * (ANNUAL_DIVIDEND_RATE / 12);
         const causesAmt  = monthlyDiv * CAUSES_RATE;
 
+        // 50% of dividends reinvested, 40% to causes, 10% ops — all leave the portfolio except reinvested
         portfolio += monthlyDiv * REINVEST_RATE + portfolio * (ANNUAL_MARKET_RETURN / 12);
 
         if (crossoverMonth < 0 && causesAmt >= monthly) {
@@ -48,7 +47,7 @@ function runScenario(monthly, years) {
         }
 
         if (m % 12 === 0) {
-            yearlyPoints.push({
+            points.push({
                 year:          m / 12,
                 portfolio:     Math.round(portfolio),
                 totalInvested: Math.round(totalInvested),
@@ -58,22 +57,40 @@ function runScenario(monthly, years) {
         }
     }
 
-    const last             = yearlyPoints[yearlyPoints.length - 1];
-    const crossoverYear    = crossoverMonth > 0 ? crossoverMonth / 12 : -1;
-    const crossoverYearIdx = crossoverYear > 0
-        ? Math.min(Math.ceil(crossoverYear) - 1, yearlyPoints.length - 1)
+    const last          = points[points.length - 1];
+    // Exact fractional year of crossover (e.g. 17.75 = "Year 17, Month 9")
+    const crossoverYear = crossoverMonth > 0 ? crossoverMonth / 12 : -1;
+
+    // Index of the yearly point just BEFORE the crossover (for chart annotation)
+    // e.g. crossoverYear=17.75 → floorIdx=16 (Year 17, 0-based), frac=0.75
+    const crossoverFloorIdx = crossoverYear > 0
+        ? Math.min(Math.floor(crossoverYear) - 1, points.length - 2)
         : -1;
+    const crossoverFrac = crossoverYear > 0
+        ? crossoverYear - Math.floor(crossoverYear)
+        : 0;
 
     return {
-        points:           yearlyPoints,
+        points,
         crossoverMonth,
         crossoverYear,
-        crossoverYearIdx,
+        crossoverFloorIdx,
+        crossoverFrac,
         finalPortfolio:   last.portfolio,
         totalInvested:    last.totalInvested,
         monthlyDiv:       last.monthlyDiv,
         causesAmt:        last.causesAmt
     };
+}
+
+// Format crossover month as "Year 17, Month 9"
+// (year = full years elapsed, month = months into the next year)
+function formatCrossover(crossoverMonth) {
+    if (crossoverMonth < 0) return 'Not reached';
+    const yr = Math.floor(crossoverMonth / 12);
+    const mo = crossoverMonth % 12;
+    if (mo === 0) return `Year ${yr}`;
+    return `Year ${yr}, Month ${mo}`;
 }
 
 // ── Public entry point (called by dashboard.js) ───────────────────────────
@@ -94,30 +111,33 @@ window.initImpactDashboard = function (userData) {
 
 // ── Hero metrics ──────────────────────────────────────────────────────────
 function displayHeroMetrics(scenario) {
-    const { finalPortfolio, totalInvested, crossoverYear, causesAmt } = scenario;
-    const growthPct = ((finalPortfolio - totalInvested) / totalInvested * 100).toFixed(0);
+    const { finalPortfolio, totalInvested, crossoverMonth, causesAmt } = scenario;
 
-    const heroInvested  = document.getElementById('heroInvested');
-    const heroPortfolio = document.getElementById('heroPortfolio');
-    const heroGrowth    = document.getElementById('heroGrowth');
-    const heroCrossover = document.getElementById('heroCrossover');
+    const heroInvested      = document.getElementById('heroInvested');
+    const heroPortfolio     = document.getElementById('heroPortfolio');
+    const heroGrowth        = document.getElementById('heroGrowth');
+    const heroCrossover     = document.getElementById('heroCrossover');
     const heroCrossoverSub  = document.getElementById('heroCrossoverSub');
     const heroCrossoverCard = document.getElementById('heroCrossoverCard');
 
     if (heroInvested)  heroInvested.textContent  = `€${totalInvested.toLocaleString()}`;
     if (heroPortfolio) heroPortfolio.textContent = `€${finalPortfolio.toLocaleString()}`;
-    if (heroGrowth)    heroGrowth.textContent    = `+${growthPct}% return on invested capital`;
+    if (heroGrowth)    heroGrowth.textContent    = `${DEMO_YEARS} years of €${DEMO_MONTHLY}/month`;
 
-    if (heroCrossover && crossoverYear > 0) {
-        const yr = Math.floor(crossoverYear);
-        const mo = Math.round((crossoverYear - yr) * 12);
-        heroCrossover.textContent    = `Year ${yr}${mo > 0 ? `, Month ${mo}` : ''}`;
-        heroCrossoverSub.textContent = `Portfolio now pays €${Math.round(causesAmt)}/mo to causes`;
-        if (heroCrossoverCard) heroCrossoverCard.classList.add('crossover-reached');
+    if (heroCrossover) {
+        heroCrossover.textContent = formatCrossover(crossoverMonth);
+        if (heroCrossoverSub) {
+            heroCrossoverSub.textContent = crossoverMonth > 0
+                ? `Portfolio now pays €${Math.round(causesAmt)}/mo to causes`
+                : 'Extend the period or increase monthly amount';
+        }
+        if (heroCrossoverCard && crossoverMonth > 0) {
+            heroCrossoverCard.classList.add('crossover-reached');
+        }
     }
 }
 
-// ── Shared chart options ──────────────────────────────────────────────────
+// ── Shared chart defaults ─────────────────────────────────────────────────
 function baseChartOptions(yTickCallback) {
     return {
         responsive:          true,
@@ -147,8 +167,11 @@ function baseChartOptions(yTickCallback) {
         scales: {
             y: {
                 beginAtZero: true,
-                ticks: { color: '#A89E8C', callback: yTickCallback || (v => '€' + v.toLocaleString()) },
-                grid:  { color: 'rgba(245, 241, 232, 0.1)' }
+                ticks: {
+                    color:    '#A89E8C',
+                    callback: yTickCallback || (v => '€' + v.toLocaleString())
+                },
+                grid: { color: 'rgba(245, 241, 232, 0.1)' }
             },
             x: {
                 ticks: { color: '#A89E8C' },
@@ -158,26 +181,20 @@ function baseChartOptions(yTickCallback) {
     };
 }
 
-// ── Primary chart: crossover ──────────────────────────────────────────────
-function displayCrossoverChart(scenario, monthly) {
-    const ctx = document.getElementById('crossoverChart');
-    if (!ctx) return;
-    const existing = Chart.getChart(ctx);
-    if (existing) existing.destroy();
-
-    const { points, crossoverYearIdx } = scenario;
-    monthly = monthly || DEMO_MONTHLY;
-
-    const labels      = points.map(p => `Yr ${p.year}`);
-    const causesData  = points.map(p => parseFloat(p.causesAmt.toFixed(2)));
-    const donationLine = points.map(() => monthly);
-
-    const crossoverPlugin = {
+// Build a Chart.js plugin that draws a dashed vertical line at the exact
+// crossover position (interpolated between yearly tick marks).
+function makeCrossoverPlugin(floorIdx, frac) {
+    return {
         id: 'crossoverLine',
         afterDraw(chart) {
-            if (crossoverYearIdx < 0) return;
+            if (floorIdx < 0) return;
             const { ctx: c, chartArea, scales } = chart;
-            const x = scales.x.getPixelForTick(crossoverYearIdx);
+
+            // Interpolate between the tick just before and just after crossover
+            const x1 = scales.x.getPixelForTick(floorIdx);
+            const x2 = scales.x.getPixelForTick(floorIdx + 1);
+            const x  = x1 + (x2 - x1) * frac;
+
             c.save();
             c.beginPath();
             c.moveTo(x, chartArea.top);
@@ -193,6 +210,21 @@ function displayCrossoverChart(scenario, monthly) {
             c.restore();
         }
     };
+}
+
+// ── PRIMARY chart: when causes payout crosses the monthly donation ─────────
+function displayCrossoverChart(scenario, monthly) {
+    const ctx = document.getElementById('crossoverChart');
+    if (!ctx) return;
+    const existing = Chart.getChart(ctx);
+    if (existing) existing.destroy();
+
+    monthly = monthly || DEMO_MONTHLY;
+    const { points, crossoverFloorIdx, crossoverFrac } = scenario;
+
+    const labels      = points.map(p => `Yr ${p.year}`);
+    const causesData  = points.map(p => parseFloat(p.causesAmt.toFixed(2)));
+    const donationFlat = points.map(() => monthly);
 
     const opts = baseChartOptions(v => '€' + v.toFixed(0));
     opts.plugins.tooltip.callbacks = {
@@ -200,13 +232,13 @@ function displayCrossoverChart(scenario, monthly) {
     };
 
     new Chart(ctx, {
-        type:    'line',
+        type: 'line',
         data: {
             labels,
             datasets: [
                 {
                     label:       `Your monthly donation (€${monthly})`,
-                    data:        donationLine,
+                    data:        donationFlat,
                     borderColor: 'rgba(255, 165, 0, 0.9)',
                     borderWidth: 2,
                     borderDash:  [8, 4],
@@ -227,18 +259,18 @@ function displayCrossoverChart(scenario, monthly) {
             ]
         },
         options: opts,
-        plugins: [crossoverPlugin]
+        plugins: [makeCrossoverPlugin(crossoverFloorIdx, crossoverFrac)]
     });
 }
 
-// ── Secondary chart: portfolio growth ────────────────────────────────────
+// ── SECONDARY chart: cash invested vs portfolio value ─────────────────────
 function displayPortfolioGrowthChart(scenario) {
     const ctx = document.getElementById('portfolioGrowthChart');
     if (!ctx) return;
     const existing = Chart.getChart(ctx);
     if (existing) existing.destroy();
 
-    const { points } = scenario;
+    const { points, crossoverFloorIdx, crossoverFrac } = scenario;
     const labels    = points.map(p => `Yr ${p.year}`);
     const invested  = points.map(p => p.totalInvested);
     const portfolio = points.map(p => p.portfolio);
@@ -275,11 +307,12 @@ function displayPortfolioGrowthChart(scenario) {
                 }
             ]
         },
-        options: opts
+        options: opts,
+        plugins: [makeCrossoverPlugin(crossoverFloorIdx, crossoverFrac)]
     });
 }
 
-// ── Donut chart ───────────────────────────────────────────────────────────
+// ── Donut: dividend split ─────────────────────────────────────────────────
 let allocationChartInstance = null;
 
 function displayAllocationChart() {
@@ -311,7 +344,7 @@ function displayAllocationChart() {
                     bodyColor:       '#F5F1E8',
                     borderColor:     'rgba(245, 241, 232, 0.2)',
                     borderWidth:     1,
-                    callbacks: { label: ctx => ' ' + ctx.label }
+                    callbacks: { label: c => ' ' + c.label }
                 }
             }
         }
@@ -320,6 +353,9 @@ function displayAllocationChart() {
 
 // ── Causes breakdown ──────────────────────────────────────────────────────
 function displayCausesBreakdown(themes, scenario) {
+    const causesList = document.getElementById('causesList');
+    if (!causesList || !themes.length) return;
+
     const annualCauses = scenario.causesAmt * 12;
     const perCause     = annualCauses / themes.length;
 
@@ -337,9 +373,6 @@ function displayCausesBreakdown(themes, scenario) {
         'freedom':      'Freedom of Speech'
     };
 
-    const causesList = document.getElementById('causesList');
-    if (!causesList) return;
-
     causesList.innerHTML = '';
     themes.forEach(theme => {
         const div = document.createElement('div');
@@ -352,7 +385,7 @@ function displayCausesBreakdown(themes, scenario) {
     });
 }
 
-// ── Simulator ─────────────────────────────────────────────────────────────
+// ── Impact Simulator ──────────────────────────────────────────────────────
 function setupSimulator() {
     const btn = document.getElementById('runSimulation');
     if (!btn) return;
@@ -366,42 +399,35 @@ function setupSimulator() {
             return;
         }
 
-        const scenario = runScenario(monthly, years);
-        const returnPct = ((scenario.finalPortfolio - scenario.totalInvested) / scenario.totalInvested * 100).toFixed(0);
+        const s = runScenario(monthly, years);
 
-        document.getElementById('simFinalPortfolio').textContent = `€${scenario.finalPortfolio.toLocaleString()}`;
-        document.getElementById('simTotalInvested').textContent  = `€${scenario.totalInvested.toLocaleString()}`;
-        document.getElementById('simMonthlyDividend').textContent = `€${scenario.monthlyDiv.toFixed(2)}`;
-        document.getElementById('simCausesMonthly').textContent   = `€${scenario.causesAmt.toFixed(2)}`;
-        document.getElementById('simReturn').textContent          = `+${returnPct}%`;
+        document.getElementById('simFinalPortfolio').textContent  = `€${s.finalPortfolio.toLocaleString()}`;
+        document.getElementById('simTotalInvested').textContent   = `€${s.totalInvested.toLocaleString()}`;
+        document.getElementById('simMonthlyDividend').textContent = `€${s.monthlyDiv.toFixed(2)}`;
+        document.getElementById('simCausesMonthly').textContent   = `€${s.causesAmt.toFixed(2)}`;
 
         const crossoverEl = document.getElementById('simCrossover');
-        if (scenario.crossoverMonth > 0) {
-            const yr = Math.ceil(scenario.crossoverMonth / 12);
-            const mo = scenario.crossoverMonth % 12 || 12;
-            crossoverEl.textContent = `Year ${yr}, Month ${mo}`;
-            crossoverEl.style.color = '#32CD32';
-        } else {
-            crossoverEl.textContent = 'Not reached';
-            crossoverEl.style.color = '#A89E8C';
+        if (crossoverEl) {
+            crossoverEl.textContent = formatCrossover(s.crossoverMonth);
+            crossoverEl.style.color = s.crossoverMonth > 0 ? '#32CD32' : '#A89E8C';
         }
 
         document.getElementById('simResults').style.display = 'block';
-        displaySimInvestedChart(scenario.points, monthly);
-        displaySimCrossoverChart(scenario.points, monthly, scenario.crossoverYearIdx);
+        displaySimPortfolioChart(s);
+        displaySimCrossoverChart(s, monthly);
         document.getElementById('simResults').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
 }
 
-function displaySimInvestedChart(points, monthly) {
+function displaySimPortfolioChart(s) {
     const ctx = document.getElementById('predictionChart');
     if (!ctx) return;
     const existing = Chart.getChart(ctx);
     if (existing) existing.destroy();
 
-    const labels    = points.map(p => `Year ${p.year}`);
-    const invested  = points.map(p => p.totalInvested);
-    const portfolio = points.map(p => p.portfolio);
+    const labels    = s.points.map(p => `Year ${p.year}`);
+    const invested  = s.points.map(p => p.totalInvested);
+    const portfolio = s.points.map(p => p.portfolio);
 
     const opts = baseChartOptions();
     opts.plugins.tooltip.callbacks = {
@@ -435,39 +461,21 @@ function displaySimInvestedChart(points, monthly) {
                 }
             ]
         },
-        options: opts
+        options: opts,
+        plugins: [makeCrossoverPlugin(s.crossoverFloorIdx, s.crossoverFrac)]
     });
 }
 
-function displaySimCrossoverChart(points, monthly, crossoverYearIdx) {
+function displaySimCrossoverChart(s, monthly) {
     const ctx = document.getElementById('predictionChart2');
     if (!ctx) return;
     const existing = Chart.getChart(ctx);
     if (existing) existing.destroy();
 
-    const labels = points.map(p => `Year ${p.year}`);
-
-    const crossoverPlugin = {
-        id: 'crossoverLine',
-        afterDraw(chart) {
-            if (crossoverYearIdx < 0) return;
-            const { ctx: c, chartArea, scales } = chart;
-            const x = scales.x.getPixelForTick(crossoverYearIdx);
-            c.save();
-            c.beginPath();
-            c.moveTo(x, chartArea.top);
-            c.lineTo(x, chartArea.bottom);
-            c.strokeStyle = 'rgba(147, 112, 219, 0.9)';
-            c.lineWidth   = 2;
-            c.setLineDash([6, 4]);
-            c.stroke();
-            c.fillStyle = 'rgba(147, 112, 219, 0.9)';
-            c.font      = `11px 'IBM Plex Sans', sans-serif`;
-            c.textAlign = 'left';
-            c.fillText('Crossover', x + 6, chartArea.top + 16);
-            c.restore();
-        }
-    };
+    const labels      = s.points.map(p => `Year ${p.year}`);
+    // Show 40% causes payout (same metric as the main crossover chart)
+    const causesData  = s.points.map(p => parseFloat(p.causesAmt.toFixed(2)));
+    const donationFlat = s.points.map(() => monthly);
 
     const opts = baseChartOptions(v => '€' + v.toFixed(0));
     opts.plugins.tooltip.callbacks = {
@@ -481,7 +489,7 @@ function displaySimCrossoverChart(points, monthly, crossoverYearIdx) {
             datasets: [
                 {
                     label:       `Monthly Donation (€${monthly})`,
-                    data:        points.map(() => monthly),
+                    data:        donationFlat,
                     borderColor: 'rgba(255, 165, 0, 0.9)',
                     borderWidth: 2,
                     borderDash:  [8, 4],
@@ -490,8 +498,8 @@ function displaySimCrossoverChart(points, monthly, crossoverYearIdx) {
                     pointRadius: 0
                 },
                 {
-                    label:           'Monthly Dividend Income',
-                    data:            points.map(p => parseFloat(p.monthlyDiv.toFixed(2))),
+                    label:           'Monthly Causes Payout (40% of dividends)',
+                    data:            causesData,
                     borderColor:     '#32CD32',
                     backgroundColor: 'rgba(50, 205, 50, 0.08)',
                     borderWidth:     3,
@@ -502,6 +510,6 @@ function displaySimCrossoverChart(points, monthly, crossoverYearIdx) {
             ]
         },
         options: opts,
-        plugins: [crossoverPlugin]
+        plugins: [makeCrossoverPlugin(s.crossoverFloorIdx, s.crossoverFrac)]
     });
 }
