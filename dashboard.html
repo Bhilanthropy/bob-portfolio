@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="dashboard.css">
     <link rel="stylesheet" href="impact.css">
+    <link rel="stylesheet" href="overview.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=IBM+Plex+Sans:wght@300;400&display=swap" rel="stylesheet">
@@ -45,7 +46,16 @@
 
                 <!-- Tab Navigation -->
                 <div class="content-tabs">
-                    <button class="tab-btn active" data-tab="impact">
+                    <button class="tab-btn active" data-tab="overview">
+                        <svg viewBox="0 0 24 24" class="tab-icon" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="7" height="7" rx="1"/>
+                            <rect x="14" y="3" width="7" height="7" rx="1"/>
+                            <rect x="3" y="14" width="7" height="7" rx="1"/>
+                            <rect x="14" y="14" width="7" height="7" rx="1"/>
+                        </svg>
+                        My Overview
+                    </button>
+                    <button class="tab-btn" data-tab="impact">
                         <svg viewBox="0 0 24 24" class="tab-icon" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
                         </svg>
@@ -76,8 +86,54 @@
                     </button>
                 </div>
 
+                <!-- ── OVERVIEW TAB ── -->
+                <div class="tab-panel" id="tab-overview">
+                    <div class="overview-content">
+
+                        <!-- Welcome header -->
+                        <div class="overview-welcome">
+                            <div class="welcome-text">
+                                <h1 class="welcome-heading" id="welcomeHeading">Welcome back.</h1>
+                                <p class="welcome-sub" id="welcomeSub"></p>
+                            </div>
+                            <span class="welcome-date" id="welcomeDate"></span>
+                        </div>
+
+                        <!-- Since you were last here -->
+                        <section class="overview-section">
+                            <h2 class="overview-section-label">Since you were last here</h2>
+                            <div class="updates-grid" id="updatesGrid"></div>
+                        </section>
+
+                        <!-- Your snapshot -->
+                        <section class="overview-section">
+                            <h2 class="overview-section-label">Your snapshot</h2>
+                            <div class="snapshot-grid">
+                                <div class="snapshot-card snapshot-donation">
+                                    <span class="snapshot-card-label">Monthly donation</span>
+                                    <span class="snapshot-card-value" id="snapMonthly">€50</span>
+                                    <span class="snapshot-card-sub">Active · consistent giving</span>
+                                    <button class="snapshot-link-btn" data-goto="impact">
+                                        View Impact Dashboard →
+                                    </button>
+                                </div>
+                                <div class="snapshot-card snapshot-causes">
+                                    <span class="snapshot-card-label">Going to your causes</span>
+                                    <span class="snapshot-card-value" id="snapCauses">€—</span>
+                                    <span class="snapshot-card-sub" id="snapCausesSub">40% of monthly dividends</span>
+                                    <span class="snapshot-card-detail" id="snapCausesDetail"></span>
+                                </div>
+                                <div class="snapshot-card snapshot-project" id="projectCard">
+                                    <!-- filled by overview.js -->
+                                </div>
+                            </div>
+                        </section>
+
+                    </div>
+                </div>
+
                 <!-- ── IMPACT TAB ── -->
-                <div class="tab-panel" id="tab-impact">
+                <div class="tab-panel tab-panel-hidden" id="tab-impact">
 
                     <!-- Impact Header -->
                     <div class="impact-header">
@@ -344,8 +400,22 @@
         </div><!-- /.dashboard-content -->
     </div><!-- /.dashboard-wrapper -->
 
+    <!-- Project detail modal -->
+    <div class="project-modal" id="projectModal" aria-hidden="true">
+        <div class="project-modal-backdrop" id="projectModalBackdrop"></div>
+        <div class="project-modal-sheet" id="projectModalSheet" role="dialog" aria-modal="true">
+            <button class="modal-close-btn" id="projectModalClose" aria-label="Close">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+            <div class="modal-content" id="projectModalContent"></div>
+        </div>
+    </div>
+
     <script src="script.js"></script>
     <script src="impact.js"></script>
+    <script src="overview.js"></script>
     <script src="dashboard.js"></script>
 </body>
 </html>
