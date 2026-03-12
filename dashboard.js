@@ -22,10 +22,23 @@ document.addEventListener('DOMContentLoaded', function () {
     setupLogout();
     setupTabs();
 
+    const prevLogin = getAndUpdateLastLogin();
+
+    if (window.initOverview) {
+        window.initOverview(user, prevLogin);
+    }
     if (window.initImpactDashboard) {
         window.initImpactDashboard(user);
     }
 });
+
+// ── Last-login tracking ───────────────────────────────────────────────────
+function getAndUpdateLastLogin() {
+    const key  = 'lastLogin';
+    const prev = localStorage.getItem(key);
+    localStorage.setItem(key, Date.now().toString());
+    return prev ? parseInt(prev, 10) : null;
+}
 
 // ── Tab switching ─────────────────────────────────────────────────────────
 function setupTabs() {
