@@ -1,3 +1,9 @@
+// ── Local fallbacks for constants defined in impact.js ───────────────────
+// These match the values in impact.js so overview.js works even if script
+// loading order changes or impact.js constants aren't yet in scope.
+const OV_MONTHLY = (typeof DEMO_MONTHLY !== 'undefined') ? DEMO_MONTHLY : 50;
+const OV_YEARS   = (typeof DEMO_YEARS   !== 'undefined') ? DEMO_YEARS   : 22;
+
 // ── Platform updates config (edit this to change the "Since you were last here" cards) ──
 const PLATFORM_UPDATES = [
     {
@@ -59,7 +65,7 @@ const DEMO_PROJECTS = [
         org:         'Andela Foundation',
         location:    'Nigeria & Ghana',
         summary:     'Equipping 30 rural secondary schools with coding labs and a two-year curriculum.',
-        body:        'Sub-Saharan Africa will have the world's largest working-age population by 2035, yet fewer than 15% of schools teach any form of digital skills. This project builds solar-powered computer labs in 30 rural secondary schools, delivers a two-year coding curriculum, and trains teachers in-country. Students completing the programme have a direct pathway to the Andela fellowship.',
+        body:        "Sub-Saharan Africa will have the world's largest working-age population by 2035, yet fewer than 15% of schools teach any form of digital skills. This project builds solar-powered computer labs in 30 rural secondary schools, delivers a two-year coding curriculum, and trains teachers in-country. Students completing the programme have a direct pathway to the Andela fellowship.",
         goal:        60000,
         raised:      41800,
         gradient:    ['#1a2a3a', '#0a1a2a']
@@ -93,12 +99,13 @@ const DEMO_PROJECTS = [
 ];
 
 // ── Entry point (called by dashboard.js after auth) ───────────────────────
+// Each step is isolated so one failure never silences the rest.
 window.initOverview = function (userData, prevLogin) {
-    displayWelcome(userData, prevLogin);
-    renderUpdates();
-    renderSnapshot(userData);
-    setupSnapshotNavigation();
-    setupProjectModal();
+    try { displayWelcome(userData, prevLogin); } catch (e) { console.error('[Overview] displayWelcome:', e); }
+    try { renderUpdates(); }                    catch (e) { console.error('[Overview] renderUpdates:', e); }
+    try { renderSnapshot(userData); }           catch (e) { console.error('[Overview] renderSnapshot:', e); }
+    try { setupSnapshotNavigation(); }          catch (e) { console.error('[Overview] setupSnapshotNav:', e); }
+    try { setupProjectModal(); }                catch (e) { console.error('[Overview] setupProjectModal:', e); }
 };
 
 // ── Welcome header ────────────────────────────────────────────────────────
@@ -110,20 +117,23 @@ function displayWelcome(userData, prevLogin) {
     const name = (userData && userData.name) ? userData.name.split(' ')[0] : 'there';
 
     if (!prevLogin) {
-        heading.textContent = `Welcome, ${name}.`;
-        sub.textContent     = "Great to have you here. Let's build your impact.";
+        if (heading) heading.textContent = `Welcome, ${name}.`;
+        if (sub)     sub.textContent     = "Great to have you here. Let's build your impact.";
     } else {
         const daysSince = Math.floor((Date.now() - prevLogin) / (1000 * 60 * 60 * 24));
-        heading.textContent = `Welcome back, ${name}.`;
-        if      (daysSince === 0) sub.textContent = 'You were here earlier today.';
-        else if (daysSince === 1) sub.textContent = 'You were last here yesterday.';
-        else                      sub.textContent = `You were last here ${daysSince} days ago.`;
+        if (heading) heading.textContent = `Welcome back, ${name}.`;
+        if (sub) {
+            if      (daysSince === 0) sub.textContent = 'You were here earlier today.';
+            else if (daysSince === 1) sub.textContent = 'You were last here yesterday.';
+            else                      sub.textContent = `You were last here ${daysSince} days ago.`;
+        }
     }
 
-    const now = new Date();
-    dateEl.textContent = now.toLocaleDateString('en-GB', {
-        weekday: 'long', day: 'numeric', month: 'long'
-    });
+    if (dateEl) {
+        dateEl.textContent = new Date().toLocaleDateString('en-GB', {
+            weekday: 'long', day: 'numeric', month: 'long'
+        });
+    }
 }
 
 // ── Platform update cards ─────────────────────────────────────────────────
@@ -153,13 +163,13 @@ function renderUpdates() {
 // ── Snapshot cards ────────────────────────────────────────────────────────
 function renderSnapshot(userData) {
     // Monthly donation
-    const monthly = (userData && userData.monthlyDonation) ? userData.monthlyDonation : DEMO_MONTHLY;
+    const monthly = (userData && userData.monthlyDonation) ? userData.monthlyDonation : OV_MONTHLY;
     const snapMonthly = document.getElementById('snapMonthly');
     if (snapMonthly) snapMonthly.textContent = `€${monthly}`;
 
     // Causes payout: run the same simulation used by the impact dashboard
     if (typeof runScenario === 'function') {
-        const scenario = runScenario(monthly, DEMO_YEARS);
+        const scenario = runScenario(monthly, OV_YEARS);
         const snapCauses = document.getElementById('snapCauses');
         const snapCausesSub  = document.getElementById('snapCausesSub');
         const snapCausesDetail = document.getElementById('snapCausesDetail');
